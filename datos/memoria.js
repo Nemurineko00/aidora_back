@@ -1,6 +1,3 @@
-// Datos en memoria: son los mismos que tenías escritos en las pantallas de tu proyecto original.
-// Se reinician cada vez que se reinicia el servidor. Aquí es donde más adelante irá tu base de datos.
-
 const medicamentos = [
   { id: 1, nombre: 'Paracetamol', rs: '210M2004 SSA VI' },
   { id: 2, nombre: 'Paracetamol', rs: '210M2004 SSA VI' },

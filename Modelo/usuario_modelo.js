@@ -4,7 +4,6 @@ function listar() {
   return usuarios;
 }
 
-// Devuelve true si el usuario existía y se eliminó
 function eliminar(id) {
   const posicion = usuarios.findIndex((u) => u.id === id);
   if (posicion === -1) return false;
