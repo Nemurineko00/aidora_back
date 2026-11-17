@@ -3,12 +3,12 @@ const poool = require('../bd');
 const COLUMNAS_PUBLICAS = 'id_ong, nombre, tipo, rfc_clave, clave_admin, verifica_entrega ';
 
 async function listar(){
-  const {rows} = await poool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM ong ORDER BY id_ong`);
+  const {rows} = await poool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM ong_hospital ORDER BY id_ong`);
   return rows;
 }
 
 async function listarOngPorId(id_ong) {
-  const {rows}= await poool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM ong WHERE id_ong = $1`, [id_ong]);
+  const {rows}= await poool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM ong_hospital WHERE id_ong = $1`, [id_ong]);
   return rows[0];
 }
 
