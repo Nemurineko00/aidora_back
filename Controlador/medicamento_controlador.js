@@ -1,6 +1,6 @@
 const medicamentoModelo = require('../Modelo/medicamento_modelo');
 
-function listarMedicamentos(req, res) {
+async function listarMedicamentos(req, res) {
   res.json({ medicamentos: medicamentoModelo.listar() });
 }
 
