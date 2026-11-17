@@ -1,6 +1,6 @@
 const { medicamentos } = require('../datos/memoria');
 
-function listar() {
+async function listar() {
   return medicamentos;
 }
 

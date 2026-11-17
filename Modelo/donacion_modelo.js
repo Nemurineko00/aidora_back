@@ -1,10 +1,10 @@
 const { donaciones } = require('../datos/memoria');
 
-function listar() {
+async function listar() {
   return donaciones;
 }
 
-function obtenerPorId(id) {
+async function obtenerPorId(id) {
   return donaciones.find((d) => d.id === id);
 }
 
