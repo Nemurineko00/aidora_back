@@ -21,9 +21,8 @@ async function crear({nombre, apellido, email, contrasenaHash}) {
 async function actualizar( id_usuario, { nombre, apellido, email }) {
   const cambios = Object.entries({nombre, apellido, email}).filter(([_, valor]) => valor !== undefined);
 
-  if (cambios.length === 0) {
-    return listarUsuariosPorId(id_usuario);
-  }
+  if (cambios.length === 0) return listarUsuariosPorId(id_usuario);
+
 
   const columnas = cambios.map(([columna], i) => `${columna} = $${i + 1}`).join(', ');
 
