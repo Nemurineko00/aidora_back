@@ -40,3 +40,5 @@ async function eliminarPorId(id_ong) {
   const {rows} = await poool.query(`DELETE FROM ong_hospital WHERE id_ong = $1 RETURNING *`, [id_ong]);
   return rows[0];
 }
+
+module.exports = { listarOngPorId, eliminarPorId, listar, verificarEntrega, crear, actualizar };
