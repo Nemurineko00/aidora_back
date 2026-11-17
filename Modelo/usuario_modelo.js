@@ -27,6 +27,10 @@ async function crear({nombre,appellido,email,contrasena}) {
   return sinContrasena(nuevo)
 }
 
+async function verificarContrasena(fila,contrasena) {
+  return bcrypt.compare(contrasena,fila.constrasena_hash);
+}
+
 async function eliminar(id_usuario) {
   const posicion = usuarios.findIndex((u) => u.id_usuario === id_usuario);
   if (posicion === -1) return false;
@@ -34,4 +38,4 @@ async function eliminar(id_usuario) {
   return true;
 }
 
-module.exports = { listar,buscarPorEmail,crear, eliminar, sinContrasena};
+module.exports = { listar,buscarPorEmail,crear, verificarContrasena, eliminar, sinContrasena};

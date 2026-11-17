@@ -31,4 +31,20 @@ async function registrar(req, res) {
   res.status(201).json({ usuario });
 }
 
-module.exports = { registrar };
+async function iniciarSesion(req,res) {
+    const{correo,contrasena}=req.body||{};
+    if(!correo||!contrasena){
+        return res.status(400).json({error:'Escribe tu correo y tu contraseña'});
+    }
+    const usuario=await usuarioModelo.buscarPorEmail(String(correo).trim().toLowerCase());
+    
+    if (!usuario || !(await usuarioModelo.verificarContrasena(usuario, String(contrasena)))) {
+    return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
+  }
+  if (!usuario.activo) {
+    return res.status(403).json({ error: 'Esta cuenta está desactivada' });
+  }
+
+  res.json({ usuario: usuarioModelo.sinContrasena(usuario) });
+}
+module.exports = { registrar,iniciarSesion };

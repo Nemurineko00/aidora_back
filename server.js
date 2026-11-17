@@ -21,6 +21,7 @@ app.get('/', (req, res) => {
   res.json({ mensaje: 'Aidora (backend) funcionando correctamente' });
 });
 app.post('/api/usuarios/registro', usuario.registrar);
+app.post('/api/usuarios/login', usuario.iniciarSesion);
 app.get('/api/medicamentos', medicamento.listarMedicamentos);
 
 app.get('/api/admin/usuarios', admin.listarUsuarios);
