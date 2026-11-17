@@ -2,7 +2,7 @@ const pool = require('../bd');
 
 const COLUMNAS_PUBLICAS = 'id_usuario, nombre, apellido, email, activo';
 
-async function listar(){
+async function listarUsuarios(){
   const {rows} = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM usuarios ORDER BY id_usuario`);
   return rows;
 }
@@ -12,13 +12,13 @@ async function listarUsuariosPorId(id_usuario) {
   return rows[0];
 }
 
-async function crear({nombre, apellido, email, contrasenaHash}) {
+async function crearUsuario({nombre, apellido, email, contrasenaHash}) {
   const { rows } = await pool.query(`INSERT INTO usuarios (nombre, apellido, email, contrasena_hash) VALUES ($1, $2, $3, $4) RETURNING ${COLUMNAS_PUBLICAS}`,[nombre, apellido, email, contrasenaHash]);
 
   return rows[0];
 }
 
-async function actualizar( id_usuario, { nombre, apellido, email }) {
+async function actualizarUsuario( id_usuario, { nombre, apellido, email }) {
   const cambios = Object.entries({nombre, apellido, email}).filter(([_, valor]) => valor !== undefined);
 
   if (cambios.length === 0) return listarUsuariosPorId(id_usuario);
@@ -33,7 +33,7 @@ async function actualizar( id_usuario, { nombre, apellido, email }) {
 }
 
 //esta es la que vamos a ocupar para eliminar
-async function desactivarporId(id_usuario) {
+async function desactivarUsuarioPorId(id_usuario) {
   const resultado = await pool.query(`UPDATE usuarios SET activo = false WHERE id_usuario = $1 RETURNING *`, [id_usuario]);
 
   if (resultado.rowCount === 0) { return undefined; }
@@ -41,9 +41,9 @@ async function desactivarporId(id_usuario) {
 }
 
 //esta no porque afecta la integridad de la base de datos, solo estará para completar el CRUD
-async function eliminarPorId(id_usuario) {
+async function eliminarUsuarioPorId(id_usuario) {
   const {rows} = await pool.query(`DELETE FROM usuarios WHERE id_usuario = $1 RETURNING *`, [id_usuario]);
   return rows[0];
 }
 
-module.exports = { listarUsuariosPorId, eliminarPorId, listar, desactivarporId, crear, actualizar };
+module.exports = { listarUsuariosPorId, eliminarUsuarioPorIdPorId, listarUsuarios, desactivarUsuarioPorId, crearUsuario, actualizarUsuario };
