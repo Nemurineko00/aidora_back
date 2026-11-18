@@ -5,7 +5,7 @@ async function listarDonaciones(req, res) {
 }
 
 async function obtenerDonacion(req, res) {
-  const donacion = donacionModelo.obtenerPorId(Number(req.params.id));
+  const donacion = await donacionModelo.obtenerPorId(Number(req.params.id));
   if (!donacion) return res.status(404).json({ error: 'No encontramos esa donación' });
   res.json({ donacion });
 }
