@@ -1,18 +1,22 @@
 const usuarioModelo = require('../Modelo/usuario_modelo');
 const reporteModelo = require('../Modelo/reporte_modelo');
 
-function listarUsuarios(req, res) {
-  res.json({ usuarios: usuarioModelo.listar() });
+async function listarUsuarios(req, res) {
+  res.json({ usuarios:await usuarioModelo.listarUsuario() });
 }
 
-function eliminarUsuario(req, res) {
-  const eliminado = usuarioModelo.eliminar(Number(req.params.id));
-  if (!eliminado) return res.status(404).json({ error: 'No encontramos a ese usuario' });
-  res.json({ eliminado: true });
+async function eliminarUsuario(req, res) {
+  const id_usuario = Number(req.params.id);
+  if (!Number.isInteger(id_usuario)){
+  return res.status(404).json({ error: 'El id del usuario no es válido' });
+}
+  const usuario = await usuarioModelo.desactivarUsuarioPorId(id_usuario);
+  if (!usuario) return res.status(404).json({ error: 'No encontramos a ese usuario' });
+  res.json({ desactivado: true });
 }
 
-function listarReportes(req, res) {
-  res.json({ reportes: reporteModelo.listar() });
+async function listarReportes(req, res) {
+  res.json({ reportes: await reporteModelo.listarReportes() });
 }
 
 module.exports = { listarUsuarios, eliminarUsuario, listarReportes };

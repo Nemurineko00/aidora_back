@@ -1,0 +1,78 @@
+const bcrypt=require('bcryptjs');
+const usuarioModelo=require('../Modelo/usuario_modelo');
+
+const CAMPOS_REGISTRO = ['nombre', 'apellidoP', 'apellidoM', 'correo', 'contrasena'];
+
+async function registrar(req, res) {
+  const datos = req.body || {};
+
+  const faltantes = CAMPOS_REGISTRO.filter((campo) => !String(datos[campo] || '').trim());
+  if (faltantes.length > 0) {
+    return res.status(400).json({ error: `Faltan campos: ${faltantes.join(', ')}` });
+  }
+
+  const email = datos.correo.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'El correo no es válido' });
+  }
+  if (datos.contrasena.length < 6) {
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+  }
+  if (await usuarioModelo.buscarPorEmail(email)) {
+    return res.status(409).json({ error: 'Ya existe una cuenta con ese correo' });
+  }
+
+
+  const contrasenaHash=await bcrypt.hash(datos.contrasena,10);
+
+  try{
+    const usuario=await usuarioModelo.crearUsuario({
+      nombre:datos.nombre.trim(),
+      apellido: `${datos.apellidoP.trim()} ${datos.apellidoM.trim()}`,
+      email,
+      contrasenaHash,
+    });
+    res.status(201).json({usuario});
+  }catch (error){
+    if(error.code==='23505'){
+      return res.status(409).json({error:'Ya existe una cuenta con ese correo'});
+    }
+    throw error;
+  }
+  try{
+  const usuario = await usuarioModelo.crear({
+    nombre: datos.nombre.trim(),
+    apellido: `${datos.apellidoP.trim()} ${datos.apellidoM.trim()}`,
+    email,
+    contrasena: datos.contrasena,
+  });
+  res.status(201).json({ usuario });
+}catch (error){
+  if(error.code==='23505'){
+    return res.status(409).json({error:'Ya existe una cuenta con ese correo'})
+  }
+  throw error;
+}
+}
+
+async function iniciarSesion(req,res) {
+    const{correo,contrasena}=req.body||{};
+    if(!correo||!contrasena){
+        return res.status(400).json({error:'Escribe tu correo y tu contraseña'});
+    }
+    const usuario=await usuarioModelo.buscarPorEmail(String(correo).trim().toLowerCase());
+    
+    if (!usuario || !(await usuarioModelo.verificarContrasena(usuario, String(contrasena)))) {
+    return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
+  }
+
+  if (!usuario || !(await bcrypt.compare(String(contrasena), usuario.contrasena_hash))) {
+    return res.status(403).json({ error: 'Esta cuenta está desactivada' });
+  }
+  if(!usuario.activo){
+    return res.status(403).json({error:'Esta cuenta está desactivada'});
+  }
+  
+  res.json({ usuario: usuarioModelo.sinContrasena(usuario) });
+}
+module.exports = { registrar,iniciarSesion };

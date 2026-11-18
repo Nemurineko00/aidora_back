@@ -1,7 +1,7 @@
 const medicamentoModelo = require('../Modelo/medicamento_modelo');
 
-function listarMedicamentos(req, res) {
-  res.json({ medicamentos: medicamentoModelo.listar() });
+async function listarMedicamentos(req, res) {
+  res.json({ medicamentos: await medicamentoModelo.listarMedicamentos() });
 }
 
 module.exports = { listarMedicamentos };

@@ -7,7 +7,6 @@ async function listarReportes() {
   const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM reporte ORDER BY id_reporte`);
 
   return rows;
-}
 
 async function listarReportePorId(id_reporte) {
 
@@ -15,7 +14,7 @@ async function listarReportePorId(id_reporte) {
 
   return rows[0];
 }
-
+}
 async function crearReporte({id_pub, id_usuario}) {
 
   const { rows } = await pool.query(`INSERT INTO reporte(id_pub, id_usuario) VALUES ($1,$2) RETURNING ${COLUMNAS_PUBLICAS}`, [id_pub, id_usuario]);

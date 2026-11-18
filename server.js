@@ -4,6 +4,7 @@ const cors = require('cors');
 const medicamento = require('./Controlador/medicamento_controlador');
 const admin = require('./Controlador/admin_controlador');
 const donacion = require('./Controlador/donacion_controlador');
+const usuario = require('./Controlador/usuario_controlador');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -19,7 +20,8 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.json({ mensaje: 'Aidora (backend) funcionando correctamente' });
 });
-
+app.post('/api/usuarios/registro', usuario.registrar);
+app.post('/api/usuarios/login', usuario.iniciarSesion);
 app.get('/api/medicamentos', medicamento.listarMedicamentos);
 
 app.get('/api/admin/usuarios', admin.listarUsuarios);

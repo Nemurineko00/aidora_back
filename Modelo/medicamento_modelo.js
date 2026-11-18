@@ -5,6 +5,7 @@ const COLUMNAS_PUBLICAS = 'id_medicamento, nombre_generico, codgo_rs, lote, imag
 async function listarMedicamentos(){
   const {rows} = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM medicamento ORDER BY id_medicamento`);
   return rows;
+
 }
 
 async function listarMedicamentosPorId(id_medicamento) {
