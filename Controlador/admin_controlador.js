@@ -2,7 +2,7 @@ const usuarioModelo = require('../Modelo/usuario_modelo');
 const reporteModelo = require('../Modelo/reporte_modelo');
 
 async function listarUsuarios(req, res) {
-  res.json({ usuarios:await usuarioModelo.listarUsuarios() });
+  res.json({ usuarios:await usuarioModelo.listarUsuario() });
 }
 
 async function eliminarUsuario(req, res) {
@@ -16,7 +16,7 @@ async function eliminarUsuario(req, res) {
 }
 
 async function listarReportes(req, res) {
-  res.json({ reportes: reporteModelo.listar() });
+  res.json({ reportes: await reporteModelo.listarReportes() });
 }
 
 module.exports = { listarUsuarios, eliminarUsuario, listarReportes };
