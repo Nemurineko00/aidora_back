@@ -1,3 +1,4 @@
+const bcrypt=require('bcryptjs');
 const usuarioModelo=require('../Modelo/usuario_modelo');
 
 const CAMPOS_REGISTRO = ['nombre', 'apellidoP', 'apellidoM', 'correo', 'contrasena'];
@@ -21,14 +22,37 @@ async function registrar(req, res) {
     return res.status(409).json({ error: 'Ya existe una cuenta con ese correo' });
   }
 
+
+  const contrasenaHash=await bcrypt.hash(datos.contrasena,10);
+
+  try{
+    const usuario=await usuarioModelo.crearUsuario({
+      nombre:datos.nombre.trim(),
+      apellido: `${datos.apellidoP.trim()} ${datos.apellidoM.trim()}`,
+      email,
+      contrasenaHash,
+    });
+    res.status(201).json({usuario});
+  }catch (error){
+    if(error.code==='23505'){
+      return res.status(409).json({error:'Ya existe una cuenta con ese correo'});
+    }
+    throw error;
+  }
+  try{
   const usuario = await usuarioModelo.crear({
     nombre: datos.nombre.trim(),
     apellido: `${datos.apellidoP.trim()} ${datos.apellidoM.trim()}`,
     email,
     contrasena: datos.contrasena,
   });
-
   res.status(201).json({ usuario });
+}catch (error){
+  if(error.code==='23505'){
+    return res.status(409).json({error:'Ya existe una cuenta con ese correo'})
+  }
+  throw error;
+}
 }
 
 async function iniciarSesion(req,res) {
@@ -41,10 +65,14 @@ async function iniciarSesion(req,res) {
     if (!usuario || !(await usuarioModelo.verificarContrasena(usuario, String(contrasena)))) {
     return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
   }
-  if (!usuario.activo) {
+
+  if (!usuario || !(await bcrypt.compare(String(contrasena), usuario.contrasena_hash))) {
     return res.status(403).json({ error: 'Esta cuenta está desactivada' });
   }
-
+  if(!usuario.activo){
+    return res.status(403).json({error:'Esta cuenta está desactivada'});
+  }
+  
   res.json({ usuario: usuarioModelo.sinContrasena(usuario) });
 }
 module.exports = { registrar,iniciarSesion };
