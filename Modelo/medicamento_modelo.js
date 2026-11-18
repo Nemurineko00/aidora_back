@@ -1,6 +1,6 @@
 const pool = require('../bd');
 
-const COLUMNAS_PUBLICAS = 'id_medicamento, nombre_generico, codgo_rs, lote, imagen_empaque';
+const COLUMNAS_PUBLICAS = 'id_medicamento, nombre_generico, codigo_rs, lote, imagen_empaque';
 
 async function listarMedicamentos(){
   const {rows} = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM medicamento ORDER BY id_medicamento`);

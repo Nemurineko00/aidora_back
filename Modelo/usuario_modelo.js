@@ -18,6 +18,11 @@ async function crearUsuario({nombre, apellido, email, contrasenaHash}) {
   return rows[0];
 }
 
+async function buscarPorEmail(email) {
+  const { rows } = await pool.query('SELECT * FROM usuario WHERE email = $1', [email]);
+  return rows[0];
+}
+
 async function actualizarUsuario( id_usuario, { nombre, apellido, email }) {
   const cambios = Object.entries({nombre, apellido, email}).filter(([_, valor]) => valor !== undefined);
 
@@ -46,4 +51,4 @@ async function eliminarUsuarioPorId(id_usuario) {
   return rows[0];
 }
 
-module.exports = { listarUsuarioPorId, eliminarUsuarioPorId, listarUsuario, desactivarUsuarioPorId, crearUsuario, actualizarUsuario };
+module.exports = { listarUsuarioPorId, eliminarUsuarioPorId, listarUsuario, desactivarUsuarioPorId, crearUsuario, buscarPorEmail, actualizarUsuario };

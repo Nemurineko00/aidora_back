@@ -9,4 +9,7 @@ const pool = new Pool({
     database: process.env.DB_NAME || 'aidora',
 });
 
+pool.on('error',(error)=>{
+    console.error('Se peridó una conexión con la base de datos:',error.message);
+});
 module.exports = pool;
