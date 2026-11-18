@@ -2,12 +2,12 @@ const pool = require('../bd');
 
 const COLUMNAS_PUBLICAS = 'id_usuario, nombre, apellido, email, activo';
 
-async function listarUsuarios(){
+async function listarUsuario(){
   const {rows} = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM usuarios ORDER BY id_usuario`);
   return rows;
 }
 
-async function listarUsuariosPorId(id_usuario) {
+async function listarUsuarioPorId(id_usuario) {
   const {rows}= await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM usuarios WHERE id_usuario = $1`, [id_usuario]);
   return rows[0];
 }
@@ -46,4 +46,4 @@ async function eliminarUsuarioPorId(id_usuario) {
   return rows[0];
 }
 
-module.exports = { listarUsuariosPorId, eliminarUsuarioPorIdPorId, listarUsuarios, desactivarUsuarioPorId, crearUsuario, actualizarUsuario };
+module.exports = { listarUsuarioPorId, eliminarUsuarioPorId, listarUsuario, desactivarUsuarioPorId, crearUsuario, actualizarUsuario };
