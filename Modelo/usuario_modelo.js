@@ -18,6 +18,14 @@ async function crearUsuario({nombre, apellido, email, contrasenaHash}) {
   return rows[0];
 }
 
+async function buscarPorEmail(email) {
+  const { rows } = await pool.query(
+    'SELECT id_usuario, nombre, apellido, email, activo, contrasena_hash FROM usuario WHERE email = $1',
+    [email]
+  );
+  return rows[0];
+}
+
 async function actualizarUsuario( id_usuario, { nombre, apellido, email }) {
   const cambios = Object.entries({nombre, apellido, email}).filter(([_, valor]) => valor !== undefined);
 
