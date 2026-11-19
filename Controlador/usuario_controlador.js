@@ -3,6 +3,11 @@ const usuarioModelo=require('../Modelo/usuario_modelo');
 
 const CAMPOS_REGISTRO = ['nombre', 'apellidoP', 'apellidoM', 'correo', 'contrasena'];
 
+function sinContrasena(usuario) {
+  const { contrasena_hash, ...resto } = usuario;
+  return resto;
+}
+
 async function registrar(req, res) {
   const datos = req.body || {};
 
@@ -22,7 +27,6 @@ async function registrar(req, res) {
     return res.status(409).json({ error: 'Ya existe una cuenta con ese correo' });
   }
 
-
   const contrasenaHash=await bcrypt.hash(datos.contrasena,10);
 
   try{
@@ -39,21 +43,7 @@ async function registrar(req, res) {
     }
     throw error;
   }
-  try{
-  const usuario = await usuarioModelo.crear({
-    nombre: datos.nombre.trim(),
-    apellido: `${datos.apellidoP.trim()} ${datos.apellidoM.trim()}`,
-    email,
-    contrasena: datos.contrasena,
-  });
-  res.status(201).json({ usuario });
-}catch (error){
-  if(error.code==='23505'){
-    return res.status(409).json({error:'Ya existe una cuenta con ese correo'})
-  }
-  throw error;
-}
-}
+}  
 
 async function iniciarSesion(req,res) {
     const{correo,contrasena}=req.body||{};
@@ -73,6 +63,6 @@ async function iniciarSesion(req,res) {
     return res.status(403).json({error:'Esta cuenta está desactivada'});
   }
   
-  res.json({ usuario: usuarioModelo.sinContrasena(usuario) });
+  res.json({ usuario: sinContrasena(usuario) });
 }
 module.exports = { registrar,iniciarSesion };
