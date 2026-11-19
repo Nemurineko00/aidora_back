@@ -14,5 +14,50 @@ async function listarPublicacionesPorId(id_pub) {
   return rows[0];
 }
 
+async function crearPublicacion({id_usuario, id_medicamento, cantidad}) {
+  const encabezado = await pool.query(`INSERT INTO encabezado_pub (id_usuario) VALUES ($1) RETURNING id_pub`, [id_usuario]);
 
-module.exports = { listar, obtenerPorId };
+  const id_pub = encabezado.rows[0].id_pub;
+
+  await pool.query(`INSERT INTO detalle_pub (id_pub,id_medicamento, cantidad) VALUES ($1, $2, $3)`, [id_pub, id_medicamento, cantidad]);
+
+  return listarPublicacionesPorId(id_pub);
+}
+
+async function actualizarEstadoPublicacion(id_pub, estado) {
+  const resultado = await pool.query(`UPDATE encabezado_pub SET estado = $1 WHERE id_pub = $2 RETURNING id_pub`, [estado, id_pub]);
+
+  if(resultado.rowCount === 0) return undefined;
+
+  return listarPublicacionesPorId(id_pub);
+}
+
+async function actualizarCantidaMedi(id_pub, cantidad) {
+  const resultado = await pool.query(`UPDATE detalle_pub SET cantidad = $1 WHERE id_pub = $2 RETURNING id_pub`, [cantidad, id_pub]);
+
+  if (resultado.rowCount === 0) return undefined;
+
+  return listarPublicacionesPorId(id_pub);
+}
+
+async function cancelarPublicacion(id_pub) {
+  const resultado = await SecurityPolicyViolationEvent.query(`UPDATE encabezado_pub SET estado = 'Cancelado' WHERE id_pub =$1 RETURNING id_pub`, [id_pub]);
+
+  if(resultado.rowCount === 0) return undefined;
+
+  return listarPublicacionesPorId(id_pub);
+}
+
+async function eliminarPublicacionPorId(id_pub){
+  const publicacion = await listarUsuarioPorId(id_pub);
+
+  if (!publicacion) return undefined;
+
+  await pool.query(`DELETE FROM detalle_pub WHERE id_pub = $1`,[id_pub]);
+
+  await pool.query(`DELETE FROM detalle_pub WHERE id_pub = $1`, [id_pub]);
+
+  return publicacion;
+}
+
+module.exports = { listarPublicaciones, listarPublicacionesPorId, crearPublicacion, actualizarEstadoPublicacion, actualizarCantidaMedi, cancelarPublicacion, eliminarPublicacionPorId };
