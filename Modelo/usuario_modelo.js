@@ -12,6 +12,11 @@ async function listarUsuarioPorId(id_usuario) {
   return rows[0];
 }
 
+async function listarPorEmail(email){
+  const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM usuario WHERE email = $1`, [email]);
+  return rows[0];
+}
+
 async function crearUsuario({nombre, apellido, email, contrasenaHash}) {
   const { rows } = await pool.query(`INSERT INTO usuario (nombre, apellido, email, contrasena_hash) VALUES ($1, $2, $3, $4) RETURNING ${COLUMNAS_PUBLICAS}`,[nombre, apellido, email, contrasenaHash]);
 
