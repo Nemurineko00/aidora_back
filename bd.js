@@ -6,4 +6,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
+pool.on('error',(error)=>{
+    console.error('Se peridó una conexión con la base de datos:',error.message);
+});
 module.exports = pool;

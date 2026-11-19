@@ -8,7 +8,7 @@ async function listarUsuarios(req, res) {
 async function eliminarUsuario(req, res) {
   const id_usuario = Number(req.params.id);
   if (!Number.isInteger(id_usuario)){
-  return res.status(404).json({ error: 'El id del usuario no es válido' });
+  return res.status(400).json({ error: 'El id del usuario no es válido' });
 }
   const usuario = await usuarioModelo.desactivarUsuarioPorId(id_usuario);
   if (!usuario) return res.status(404).json({ error: 'No encontramos a ese usuario' });
