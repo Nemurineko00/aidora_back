@@ -1,7 +1,7 @@
-const donacionModelo = require('../Modelo/donacion_modelo');
+const donacionModelo = require('../Modelo/publicacion_modelo');
 
 async function listarDonaciones(req, res) {
-  res.json({ donaciones: donacionModelo.listar() });
+  res.json({ donaciones: await donacionModelo.listar() });
 }
 
 async function obtenerDonacion(req, res) {
