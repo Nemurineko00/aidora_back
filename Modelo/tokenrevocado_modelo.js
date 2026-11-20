@@ -20,7 +20,7 @@ function crearModeloToken(pool){
 
     async function limpiarExpirados() {
 
-        const { rows } = await pool.query(`DELETE FROM token_revocado WHERE fecha_expiracion < NOW() RETURNING`);
+        const { rows } = await pool.query(`DELETE FROM token_revocado WHERE fecha_expiracion < NOW() RETURNING *`);
 
         return rows;
     }
