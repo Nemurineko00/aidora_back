@@ -1,6 +1,6 @@
 const pool = require('../bd');
 
-const COLUMNAS_PUBLICAS =  'id_admin, nombre, email, contrasena';
+const COLUMNAS_PUBLICAS =  'id_admin, nombre, email';
 
 async function listarAdmin() {
     const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM administrador ORDER BY id_admin`);
@@ -9,7 +9,7 @@ async function listarAdmin() {
 }
 
 async function listarAdminId(id_admin) {
-    const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM administrador WHERE id_admin = $1`);
+    const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM administrador WHERE id_admin = $1`,[id_admin]);
 
     return rows[0];
 }

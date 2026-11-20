@@ -1,6 +1,6 @@
 const pool = require('../bd');
 
-const COLUMNAS_PUBLICAS = 'id_medicamento, nombre_generico, codgo_rs, lote, imagen_empaque';
+const COLUMNAS_PUBLICAS = 'id_medicamento, nombre_generico, codigo_rs, lote, fecha_caducidad, imagen_empaque';
 
 async function listarMedicamentos(){
   const {rows} = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM medicamento ORDER BY id_medicamento`);
@@ -18,15 +18,15 @@ async function listarMedicamentoPorNombre(nombre_generico) {
 }
 
 async function crearMedicamento({ nombre_generico, codigo_rs, lote}) {
-  const { rows } = await pool.query(`INSERT INTO medicamento (nombre_generico, cofigo_rs, lote) VALUES ($1, $2, $3) RETURNING ${COLUMNAS_PUBLICAS}`, [nombre_generico, codigo_rs, lote]);
+  const { rows } = await pool.query(`INSERT INTO medicamento (nombre_generico, codigo_rs, lote, fecha_caducidad) VALUES ($1, $2, $3, $4) RETURNING ${COLUMNAS_PUBLICAS}`, [nombre_generico, codigo_rs, lote]);
 
   return rows[0];
 }
 
-async function actualizarMedicamento(id_medicamento,{nombre_generico, codigo_rs, lote}) {
-  const cambios = Object.entries({nombre_generico, codigo_rs, lote}).filter(([_, valor]) => valor !== undefined);
+async function actualizarMedicamento(id_medicamento,{nombre_generico, codigo_rs, lote, fecha_caducidad}) {
+  const cambios = Object.entries({nombre_generico, codigo_rs, lote, fecha_caducidad}).filter(([_, valor]) => valor !== undefined);
 
-  if (cambios.length === 0) return listarOngPorId(id_ong);
+  if (cambios.length === 0) return listarMedicamentosPorId(id_medicamento);
 
     const columnas = cambios.map(([columna], i) => `${columna} = $${i + 1}`).join(', ');
 

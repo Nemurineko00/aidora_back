@@ -29,7 +29,7 @@ async function actualizarPuntoEntrega(id_punto, {nombre_punto, direccion, tipo, 
 
     const columnas = cambios.map(([columna], i) => `${columna} = $${i +1}`).join(', ');
 
-    const resultado = await pool.query(`UPDATE punto_entrega SET ${columnas} WHERE id_punto = $${cambios.length + 1} RETURNING ${COLUMNAS_PUBLICAS}`, [...cambios.map(([_,valor]) => valor, id_punto)]);
+    const resultado = await pool.query(`UPDATE punto_entrega SET ${columnas} WHERE id_punto = $${cambios.length + 1} RETURNING ${COLUMNAS_PUBLICAS}`, [...cambios.map(([_,valor]) => valor), id_punto]);
 
     if(resultado.rowCount === 0) return undefined;
 
@@ -46,7 +46,7 @@ async function desactivarPuntoEntregaPorId(id_punto) {
 
 async function activarPuntoEntregaPorId(id_punto) {
     
-    const resultado = await pool.query(`UPDATE puntp_entrega SET activo = true WHERE id_punto = $1 RETURNING ${COLUMNAS_PUBLICAS}`, [id_punto]);
+    const resultado = await pool.query(`UPDATE punto_entrega SET activo = true WHERE id_punto = $1 RETURNING ${COLUMNAS_PUBLICAS}`, [id_punto]);
 
     if(resultado.rowCount === 0)return undefined;
 

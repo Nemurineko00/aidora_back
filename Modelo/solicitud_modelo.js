@@ -1,6 +1,6 @@
 const pool = require('../bd');
 
-const COLUMNAS_PUBLICAS = 's.solicitud, s.id_usuario, s.id_pub, s.estado';
+const COLUMNAS_PUBLICAS = 's.id_solicitud, s.id_usuario, s.id_pub, s.estado';
 
 async function listarSolicitud() {
     const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM solicitud s ORDER BY s.id_solicitud`);

@@ -49,11 +49,11 @@ async function cancelarPublicacion(id_pub) {
 }
 
 async function eliminarPublicacionPorId(id_pub){
-  const publicacion = await listarUsuarioPorId(id_pub);
+  const publicacion = await listarPublicacionesPorId(id_pub);
 
   if (!publicacion) return undefined;
 
-  await pool.query(`DELETE FROM detalle_pub WHERE id_pub = $1`,[id_pub]);
+  await pool.query(`DELETE FROM encabezado_pub WHERE id_pub = $1`,[id_pub]);
 
   await pool.query(`DELETE FROM detalle_pub WHERE id_pub = $1`, [id_pub]);
 
