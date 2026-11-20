@@ -41,4 +41,9 @@ async function eliminarOngPorId(id_ong) {
   return rows[0];
 }
 
-module.exports = { listarOngPorId, eliminarOngPorId, listarOng, verificarEntrega, crearOng, actualizarOng };
+async function buscarOngPorClave(clave_admin) {
+  const {rows}=await poool.query('SELECT*FROM ong_hospital WHERE clave_admin = $1', [clave_admin]);
+  return rows[0];
+}
+
+module.exports = { listarOngPorId, eliminarOngPorId, listarOng, verificarEntrega, crearOng, actualizarOng,buscarOngPorClave };

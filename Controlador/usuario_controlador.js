@@ -1,5 +1,6 @@
-const bcrypt = require('bcryptjs');
-const usuarioModelo = require('../Modelo/usuario_modelo');
+const bcrypt=require('bcryptjs');
+const usuarioModelo=require('../Modelo/usuario_modelo');
+const { firmarToken, tokenModelo } = require('./autenticacion_middleware');
 
 const CAMPOS_REGISTRO = ['nombre', 'apellidoP', 'apellidoM', 'correo', 'contrasena'];
 
@@ -40,23 +41,34 @@ async function registrar(req, res) {
   }
 }
 
-async function iniciarSesion(req, res) {
-  const { correo, contrasena } = req.body || {};
-  if (!correo || !contrasena) {
-    return res.status(400).json({ error: 'Escribe tu correo y tu contraseña' });
-  }
-
-  const usuario = await usuarioModelo.buscarPorEmail(String(correo).trim().toLowerCase());
-
-  if (!usuario || !(await bcrypt.compare(String(contrasena), usuario.contrasena_hash))) {
+async function iniciarSesion(req,res) {
+    const{correo,contrasena}=req.body||{};
+    if(!correo||!contrasena){
+        return res.status(400).json({error:'Escribe tu correo y tu contraseña'});
+    }
+    const usuario=await usuarioModelo.buscarPorEmail(String(correo).trim().toLowerCase());
+    
+    if (!usuario || !(await bcrypt.compare(String(contrasena), usuario.contrasena_hash))) {
     return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
   }
-  if (!usuario.activo) {
+
+  if (!usuario.activo ) {
     return res.status(403).json({ error: 'Esta cuenta está desactivada' });
   }
-
-  const { contrasena_hash, ...publico } = usuario;
-  res.json({ usuario: publico });
+  
+  const token =firmarToken({id:usuario.id_usuario,rol:'usuario'});
+  res.json({token,usuario:sinContrasena(usuario) });
 }
 
-module.exports = { registrar, iniciarSesion };
+async function verPerfil(req,res) {
+  const usuario=await usuarioModelo.listarUsuario(req.sesion.id);
+  if(!usuario)return res.status(404).json({error:'No encontramos tu cuenta'});
+  res.json({usuario});
+}
+
+async function cerrarSesion(req,res) {
+  await tokenModelo.revocar(req.sesion.jti, req.sesion.id, req.sesion.exp);
+  await tokenModelo.limpiarExpirados();
+  res.json({ mensaje: 'Sesión cerrada' });
+}
+module.exports = { registrar,iniciarSesion,verPerfil,cerrarSesion };
