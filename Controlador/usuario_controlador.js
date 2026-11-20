@@ -1,5 +1,6 @@
 const bcrypt=require('bcryptjs');
 const usuarioModelo=require('../Modelo/usuario_modelo');
+const { firmarToken, tokenModelo } = require('./autenticacion_middleware');
 
 const CAMPOS_REGISTRO = ['nombre', 'apellidoP', 'apellidoM', 'correo', 'contrasena'];
 
@@ -60,6 +61,19 @@ async function iniciarSesion(req,res) {
     return res.status(403).json({ error: 'Esta cuenta está desactivada' });
   }
   
-  res.json({ usuario: sinContrasena(usuario) });
+  const token =firmarToken({id:usuario.id_usuario,rol:'usuario'});
+  res.json({token,usuario:sinContrasena(usuario) });
 }
-module.exports = { registrar,iniciarSesion };
+
+async function verPerfil(req,res) {
+  const usuario=await usuarioModelo.listarUsuario(req.sesion.id);
+  if(!usuario)return res.status(404).json({error:'No encontramos tu cuenta'});
+  res.json({usuario});
+}
+
+async function cerrarSesion(req,res) {
+  await tokenModelo.revocar(req.sesion.jti, req.sesion.id, req.sesion.exp);
+  await tokenModelo.limpiarExpirados();
+  res.json({ mensaje: 'Sesión cerrada' });
+}
+module.exports = { registrar,iniciarSesion,verPerfil,cerrarSesion };
