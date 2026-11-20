@@ -52,15 +52,12 @@ async function iniciarSesion(req,res) {
     }
     const usuario=await usuarioModelo.buscarPorEmail(String(correo).trim().toLowerCase());
     
-    if (!usuario || !(await usuarioModelo.verificarContrasena(usuario, String(contrasena)))) {
+    if (!usuario || !(await bcrypt.compare(String(contrasena), usuario.contrasena_hash))) {
     return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
   }
 
-  if (!usuario || !(await bcrypt.compare(String(contrasena), usuario.contrasena_hash))) {
+  if (!usuario.activo ) {
     return res.status(403).json({ error: 'Esta cuenta está desactivada' });
-  }
-  if(!usuario.activo){
-    return res.status(403).json({error:'Esta cuenta está desactivada'});
   }
   
   res.json({ usuario: sinContrasena(usuario) });
