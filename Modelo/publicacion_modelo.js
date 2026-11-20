@@ -14,6 +14,12 @@ async function listarPublicacionesPorId(id_pub) {
   return rows[0];
 }
 
+async function listarPublicacionesDisponibles() {
+  const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM encabezado_pub ep JOIN detalle_pub dp ON ep.id_pub = dp.id_pub JOIN medicamento m ON dp.id_medicamenmto = m.id_medicamento WHERE ep.estado = 'Disponible'`);
+
+  return rows;
+}
+
 async function crearPublicacion({id_usuario, id_medicamento, cantidad}) {
   const encabezado = await pool.query(`INSERT INTO encabezado_pub (id_usuario) VALUES ($1) RETURNING id_pub`, [id_usuario]);
 
@@ -59,5 +65,7 @@ async function eliminarPublicacionPorId(id_pub){
 
   return publicacion;
 }
+
+listar
 
 module.exports = { listarPublicaciones, listarPublicacionesPorId, crearPublicacion, actualizarEstadoPublicacion, actualizarCantidaMedi, cancelarPublicacion, eliminarPublicacionPorId };

@@ -65,4 +65,10 @@ async function listarPuntoEntregaPorOng(id_ong) {
     return rows;
 }
 
-module.exports = {listarPuntoEntrega, listarPuntoEntregaPorId, listarPuntoEntregaPorOng, crearPuntoEntrega, actualizarPuntoEntrega, activarPuntoEntregaPorId, desactivarPuntoEntregaPorId, eliminarPuntoEntregaPorId}
+async function listarPuntoEntregaActivos() {
+    const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM punto_entrega WHERE activo = true`);
+
+    return rows;
+}
+
+module.exports = {listarPuntoEntrega, listarPuntoEntregaPorId, listarPuntoEntregaPorOng, listarPuntoEntregaActivos, crearPuntoEntrega, actualizarPuntoEntrega, activarPuntoEntregaPorId, desactivarPuntoEntregaPorId, eliminarPuntoEntregaPorId}
