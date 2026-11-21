@@ -15,7 +15,7 @@ async function listarPublicacionesPorId(id_pub) {
 }
 
 async function listarPublicacionesDisponibles() {
-  const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM encabezado_pub ep JOIN detalle_pub dp ON ep.id_pub = dp.id_pub JOIN medicamento m ON dp.id_medicamenmto = m.id_medicamento WHERE ep.estado = 'Disponible'`);
+  const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM encabezado_pub ep JOIN detalle_pub dp ON ep.id_pub = dp.id_pub JOIN medicamento m ON dp.id_medicamento = m.id_medicamento WHERE ep.estado = 'Disponible'`);
 
   return rows;
 }
@@ -47,7 +47,7 @@ async function actualizarCantidaMedi(id_pub, cantidad) {
 }
 
 async function cancelarPublicacion(id_pub) {
-  const resultado = await SecurityPolicyViolationEvent.query(`UPDATE encabezado_pub SET estado = 'Cancelado' WHERE id_pub =$1 RETURNING id_pub`, [id_pub]);
+  const resultado = await pool.query(`UPDATE encabezado_pub SET estado = 'Cancelado' WHERE id_pub =$1 RETURNING id_pub`, [id_pub]);
 
   if(resultado.rowCount === 0) return undefined;
 
@@ -59,13 +59,13 @@ async function eliminarPublicacionPorId(id_pub){
 
   if (!publicacion) return undefined;
 
-  await pool.query(`DELETE FROM encabezado_pub WHERE id_pub = $1`,[id_pub]);
+  await pool.query(`DELETE FROM detalle_pub WHERE id_pub = $1`,[id_pub]);
 
-  await pool.query(`DELETE FROM detalle_pub WHERE id_pub = $1`, [id_pub]);
+  await pool.query(`DELETE FROM encabezado_pub WHERE id_pub = $1`, [id_pub]);
 
   return publicacion;
 }
 
 listar
 
-module.exports = { listarPublicaciones, listarPublicacionesPorId, crearPublicacion, actualizarEstadoPublicacion, actualizarCantidaMedi, cancelarPublicacion, eliminarPublicacionPorId };
+module.exports = { listarPublicaciones, listarPublicacionesPorId, listarPublicacionesDisponibles, crearPublicacion, actualizarEstadoPublicacion, actualizarCantidaMedi, cancelarPublicacion, eliminarPublicacionPorId };
