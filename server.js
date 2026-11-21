@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
+const pool = require('./bd');
 
 const medicamento = require('./Controlador/medicamento_controlador');
 const admin = require('./Controlador/admin_controlador');
@@ -10,9 +12,7 @@ const sesion = require('./Controlador/sesion_controlador');
 const puntoEntrega = require('./Controlador/puntoentrega_controlador');
 const pool = require('./bd');
 const reporte = require('./Controlador/reporte_controlador');
-const multer = require('multer');
 
-const subirFoto = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }).single('foto');
 
 const { verificarToken, soloRol } = require('./Controlador/autenticacion_middleware');
 
@@ -32,6 +32,12 @@ const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:3000')
 app.use(cors({ origin: FRONTEND_URL }));
 app.use(express.json());
 
+const subirFoto = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }).single('foto');
+
+const soloUsuario = [verificarToken, soloRol('usuario')];
+const soloAdmin = [verificarToken, soloRol('admin')];
+const soloOng = [verificarToken, soloRol('ong')];
+
 app.get('/', (req, res) => {
   res.json({ mensaje: 'Aidora (backend) funcionando correctamente' });
 });
@@ -49,26 +55,26 @@ app.get('/api/salud', async (req, res) => {
 app.get('/api/medicamentos', medicamento.listarMedicamentos);
 app.get('/api/puntos-entrega', puntoEntrega.listarPuntosActivos);
 
-const soloUsuario = [verificarToken, soloRol('usuario')];
 app.post('/api/usuarios/registro', usuario.registrar);
 app.post('/api/usuarios/login', usuario.iniciarSesion);
 app.get('/api/usuarios/perfil', soloUsuario, usuario.verPerfil);
 app.post('/api/usuarios/logout', soloUsuario, usuario.cerrarSesion);
+
 app.post('/api/solicitudes', soloUsuario, solicitud.crearSolicitud);
 app.get('/api/solicitudes/mias', soloUsuario, solicitud.listarMisSolicitudes);
 app.get('/api/solicitudes/recibidas', soloUsuario, solicitud.listarSolicitudesRecibidas);
 app.patch('/api/solicitudes/:id/aceptar', soloUsuario, solicitud.aceptarSolicitud);
 app.patch('/api/solicitudes/:id/rechazar', soloUsuario, solicitud.rechazarSolicitud);
 app.patch('/api/solicitudes/:id/entregar', soloUsuario, solicitud.marcarEntregada);
+
 app.post('/api/reportes', soloUsuario, subirFoto, reporte.crearReporte);
 
-const soloAdmin = [verificarToken, soloRol('admin')];
 app.post('/api/admin/login', sesion.iniciarSesionAdmin);
 app.get('/api/admin/usuarios',soloAdmin, admin.listarUsuarios);
 app.delete('/api/admin/usuarios/:id',soloAdmin, admin.eliminarUsuario);
 app.get('/api/admin/reportes',soloAdmin, admin.listarReportes);
+app.patch('/api/admin/reportes/:id', soloAdmin, admin.revisarReporte);
 
-const soloOng = [verificarToken, soloRol('ong')];
 app.post('/api/ong/login', sesion.iniciarSesionOng);
 app.get('/api/ong/donaciones', soloOng,donacion.listarDonaciones);
 app.get('/api/ong/donaciones/:id', soloOng,donacion.obtenerDonacion);
@@ -82,6 +88,9 @@ app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
   if (error.type === 'entity.parse.failed') {
     return res.status(400).json({ error: 'El cuerpo de la petición no es un JSON válido' });
+  }
+  if (error.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ error: 'La imagen no puede pesar más de 5 MB' });
   }
   res.status(500).json({ error: 'Ocurrió un error en el servidor, intenta más tarde' });
 });

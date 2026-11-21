@@ -75,4 +75,46 @@ async function cerrarSesion(req,res) {
   await tokenModelo.limpiarExpirados();
   res.json({ mensaje: 'Sesión cerrada' });
 }
-module.exports = { registrar,iniciarSesion,verPerfil,cerrarSesion };
+
+async function editarPerfil(req,res) {
+  const datos=req.body||{};
+  const cambios={};
+
+
+  if(datos.nombre!==undefined){
+    if (!String(datos.nombre).trim()) return res.status(400).json({ error: 'El nombre no puede ir vacío' });
+      cambios.nombre = String(datos.nombre).trim();
+  }
+
+  if (datos.apellido !== undefined) {
+    if (!String(datos.apellido).trim()) return res.status(400).json({ error: 'El apellido no puede ir vacío' });
+    cambios.apellido = String(datos.apellido).trim();
+  }
+  if (datos.correo !== undefined) {
+    const email = String(datos.correo).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'El correo no es válido' });
+    }
+    const otro = await usuarioModelo.buscarPorEmail(email);
+    if (otro && otro.id_usuario !== req.sesion.id) {
+      return res.status(409).json({ error: 'Ese correo ya lo usa otra cuenta' });
+    }
+    cambios.email = email;
+  }
+
+  if (Object.keys(cambios).length === 0) {
+    return res.status(400).json({ error: 'No mandaste nada que cambiar (nombre, apellido o correo)' });
+  }
+
+  try {
+    const usuario = await usuarioModelo.actualizarUsuario(req.sesion.id, cambios);
+    if (!usuario) return res.status(404).json({ error: 'No encontramos tu cuenta' });
+    res.json({ usuario });
+  } catch (error) {
+    if (error.code === '23505') {
+      return res.status(409).json({ error: 'Ese correo ya lo usa otra cuenta' });
+    }
+    throw error;
+  }
+}
+module.exports = { registrar,iniciarSesion,verPerfil,cerrarSesion,editarPerfil };
