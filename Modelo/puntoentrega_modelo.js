@@ -66,7 +66,7 @@ async function listarPuntoEntregaPorOng(id_ong) {
 }
 
 async function listarPuntoEntregaActivos() {
-    const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM punto_entrega WHERE activo = true`);
+    const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM punto_entrega WHERE activo = true ORDER BY nombre_punto`);
 
     return rows;
 }

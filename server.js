@@ -7,6 +7,8 @@ const admin = require('./Controlador/admin_controlador');
 const donacion = require('./Controlador/donacion_controlador');
 const usuario = require('./Controlador/usuario_controlador');
 const sesion = require('./Controlador/sesion_controlador');
+const puntoEntrega = require('./Controlador/puntoentrega_controlador');
+
 const { verificarToken, soloRol } = require('./Controlador/autenticacion_middleware');
 
 if (!process.env.JWT_SECRET) {
@@ -30,12 +32,20 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/medicamentos', medicamento.listarMedicamentos);
+app.get('/api/puntos-entrega', puntoEntrega.listarPuntosActivos);
 
 const soloUsuario = [verificarToken, soloRol('usuario')];
 app.post('/api/usuarios/registro', usuario.registrar);
 app.post('/api/usuarios/login', usuario.iniciarSesion);
 app.get('/api/usuarios/perfil', soloUsuario, usuario.verPerfil);
 app.post('/api/usuarios/logout', soloUsuario, usuario.cerrarSesion);
+app.post('/api/solicitudes', soloUsuario, solicitud.crearSolicitud);
+app.get('/api/solicitudes/mias', soloUsuario, solicitud.listarMisSolicitudes);
+app.get('/api/solicitudes/recibidas', soloUsuario, solicitud.listarSolicitudesRecibidas);
+
+app.patch('/api/solicitudes/:id/aceptar', soloUsuario, solicitud.aceptarSolicitud);
+app.patch('/api/solicitudes/:id/rechazar', soloUsuario, solicitud.rechazarSolicitud);
+app.patch('/api/solicitudes/:id/entregar', soloUsuario, solicitud.marcarEntregada);
 
 const soloAdmin = [verificarToken, soloRol('admin')];
 app.post('/api/admin/login', sesion.iniciarSesionAdmin);
