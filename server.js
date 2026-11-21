@@ -67,6 +67,7 @@ app.post('/api/admin/login', sesion.iniciarSesionAdmin);
 app.get('/api/admin/usuarios',soloAdmin, admin.listarUsuarios);
 app.delete('/api/admin/usuarios/:id',soloAdmin, admin.eliminarUsuario);
 app.get('/api/admin/reportes',soloAdmin, admin.listarReportes);
+app.patch('/api/admin/reportes/:id', soloAdmin, admin.revisarReporte)
 
 const soloOng = [verificarToken, soloRol('ong')];
 app.post('/api/ong/login', sesion.iniciarSesionOng);
