@@ -1,39 +1,66 @@
 const pool = require('../bd');
 
-const COLUMNAS_PUBLICAS = `r.id_reporte, r.id_pub, r.id_usuario, r.id_admin, r.fecha_reporte, r.estatus, dr.id_detalle_rep, dr.motivo, dr.evidencia`;
+const CONSULTA_REPORTES = `SELECT r.id_reporte, r.id_pub, r.id_usuario, r.id_admin, r.fecha_reporte, r.estatus,
+        COALESCE(json_agg(json_build_object('id_detalle_rep', dr.id_detalle_rep, 'motivo', dr.motivo, 'evidencia', dr.evidencia)
+            ORDER BY dr.id_detalle_rep) FILTER (WHERE dr.id_detalle_rep IS NOT NULL), '[]') AS motivos
+    FROM reporte r
+    LEFT JOIN detalle_reporte dr ON r.id_reporte = dr.id_reporte`;
 
 async function listarReportes() {
 
-  const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM reporte r JOIN detalle_reporte dr ON r.id_reporte = dr.id_reporte ORDER BY id_reporte`);
+  const { rows } = await pool.query(`${CONSULTA_REPORTES} GROUP BY r.id_reporte ORDER BY r.id_reporte`);
+
 
   return rows;
 }
 
 async function listarReportePorId(id_reporte) {
 
-  const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM reporte r JOIN detalle_reporte dr ON r.id_reporte = dr.id_reporte WHERE id_reporte = $1`, [id_reporte]);
+  const { rows } = await pool.query(`${CONSULTA_REPORTES} WHERE r.id_reporte = $1 GROUP BY r.id_reporte`, [id_reporte]);
 
   return rows[0];
 }
 
-async function crearReporte({id_pub, id_usuario, motivo, evidencia}) {
+async function buscarReportePendiente(id_usuario, id_pub) {
 
-  const reporte = await pool.query(`INSERT INTO reporte (id_pub, id_usuario) VALUES ($1,$2) RETURNING id_reporte`, [id_pub, id_usuario]);
+  const { rows } = await pool.query(`SELECT id_reporte FROM reporte WHERE id_usuario = $1 AND id_pub = $2 AND estatus = 'Pendiente'`, [id_usuario, id_pub]);
 
-  const id_reporte = reporte.rows[0].id_reporte;
+  return rows[0];
+}
 
-  await pool.query(`INSERT INTO detalle_reporte ( id_reporte, motivo, evidencia) VALUES ($1, $2, $3)`, [id_reporte, motivo, evidencia]);
+async function crearReporte({id_pub, id_usuario, motivo, evidencia=null}) {
+
+  const cliente = await pool.connect();
+  let id_reporte;
+
+  try {
+    await cliente.query('BEGIN');
+
+    const reporte = await cliente.query(`INSERT INTO reporte (id_pub, id_usuario) VALUES ($1, $2) RETURNING id_reporte`, [id_pub, id_usuario]);
+    id_reporte = reporte.rows[0].id_reporte;
+
+    for (const motivo of motivos) {
+      await cliente.query(`INSERT INTO detalle_reporte (id_reporte, motivo, evidencia) VALUES ($1, $2, $3)`, [id_reporte, motivo, evidencia]);
+    }
+
+    await cliente.query('COMMIT');
+  } catch (error) {
+    await cliente.query('ROLLBACK');
+    throw error;
+  } finally {
+    cliente.release();
+  }
 
   return listarReportePorId(id_reporte);
 }
 
 async function actualizarEstatusReporte(id_reporte,{estatus,id_admin}) {
 
-  const resultado = await pool.query(`UPDATE reporte SET estatus = $1, id_admin = $2 WHERE id_reporte = $3 RETURNING ${COLUMNAS_PUBLICAS}`, [estatus, id_admin, id_reporte]);
+  const resultado = await pool.query(`UPDATE reporte SET estatus = $1, id_admin = $2 WHERE id_reporte = $3 AND estatus = 'Pendiente' RETURNING id_reporte`, [estatus, id_admin, id_reporte]);
 
- if (resultado.rowCount === 0) return undefined;
+  if (resultado.rowCount === 0) return undefined;
 
- return resultado.rows[0];
+ return listarReportePorId(id_reporte);
 }
 
 async function actualizarDetalleReporte(id_reporte,{motivo, evidencia}) {

@@ -8,6 +8,11 @@ const donacion = require('./Controlador/donacion_controlador');
 const usuario = require('./Controlador/usuario_controlador');
 const sesion = require('./Controlador/sesion_controlador');
 const puntoEntrega = require('./Controlador/puntoentrega_controlador');
+const pool = require('./bd');
+const reporte = require('./Controlador/reporte_controlador');
+const multer = require('multer');
+
+const subirFoto = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }).single('foto');
 
 const { verificarToken, soloRol } = require('./Controlador/autenticacion_middleware');
 
@@ -30,6 +35,16 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.json({ mensaje: 'Aidora (backend) funcionando correctamente' });
 });
+app.get('/api/salud', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ servidor: 'funcionando', bd: 'conectada' });
+  } catch (error) {
+    console.error('La base de datos no responde:', error.message);
+    res.status(503).json({ servidor: 'funcionando', bd: 'sin conexión' });
+  }
+});
+
 
 app.get('/api/medicamentos', medicamento.listarMedicamentos);
 app.get('/api/puntos-entrega', puntoEntrega.listarPuntosActivos);
@@ -42,10 +57,10 @@ app.post('/api/usuarios/logout', soloUsuario, usuario.cerrarSesion);
 app.post('/api/solicitudes', soloUsuario, solicitud.crearSolicitud);
 app.get('/api/solicitudes/mias', soloUsuario, solicitud.listarMisSolicitudes);
 app.get('/api/solicitudes/recibidas', soloUsuario, solicitud.listarSolicitudesRecibidas);
-
 app.patch('/api/solicitudes/:id/aceptar', soloUsuario, solicitud.aceptarSolicitud);
 app.patch('/api/solicitudes/:id/rechazar', soloUsuario, solicitud.rechazarSolicitud);
 app.patch('/api/solicitudes/:id/entregar', soloUsuario, solicitud.marcarEntregada);
+app.post('/api/reportes', soloUsuario, subirFoto, reporte.crearReporte);
 
 const soloAdmin = [verificarToken, soloRol('admin')];
 app.post('/api/admin/login', sesion.iniciarSesionAdmin);
@@ -57,6 +72,19 @@ const soloOng = [verificarToken, soloRol('ong')];
 app.post('/api/ong/login', sesion.iniciarSesionOng);
 app.get('/api/ong/donaciones', soloOng,donacion.listarDonaciones);
 app.get('/api/ong/donaciones/:id', soloOng,donacion.obtenerDonacion);
+
+app.use((req, res) => {
+  res.status(404).json({ error: `No existe la ruta ${req.method} ${req.originalUrl}` });
+});
+
+app.use((error, req, res, next) => {
+  console.error(`Error en ${req.method} ${req.originalUrl}:`, error);
+  if (res.headersSent) return next(error);
+  if (error.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'El cuerpo de la petición no es un JSON válido' });
+  }
+  res.status(500).json({ error: 'Ocurrió un error en el servidor, intenta más tarde' });
+});
 
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en el puerto: ${PORT}`);
