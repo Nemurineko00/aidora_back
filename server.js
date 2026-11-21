@@ -2,15 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const pool = require('./bd');
 
+const solicitud = require('./Controlador/solicitud_controlador');
+const pool = require('./bd');
 const medicamento = require('./Controlador/medicamento_controlador');
 const admin = require('./Controlador/admin_controlador');
 const donacion = require('./Controlador/donacion_controlador');
 const usuario = require('./Controlador/usuario_controlador');
 const sesion = require('./Controlador/sesion_controlador');
 const puntoEntrega = require('./Controlador/puntoentrega_controlador');
-const pool = require('./bd');
+
 const reporte = require('./Controlador/reporte_controlador');
 
 
