@@ -66,6 +66,4 @@ async function eliminarPublicacionPorId(id_pub){
   return publicacion;
 }
 
-listar
-
 module.exports = { listarPublicaciones, listarPublicacionesPorId, crearPublicacion, actualizarEstadoPublicacion, actualizarCantidaMedi, cancelarPublicacion, eliminarPublicacionPorId };

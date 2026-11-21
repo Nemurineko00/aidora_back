@@ -12,8 +12,8 @@ async function listarUsuarioPorId(id_usuario) {
   return rows[0];
 }
 
-async function listarPorEmail(email){
-  const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM usuario WHERE email = $1`, [email]);
+async function buscarPorEmail(email){
+  const { rows } = await pool.query('SELECT * FROM usuario WHERE email = $1', [email]);
   return rows[0];
 }
 

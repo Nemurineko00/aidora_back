@@ -2,6 +2,11 @@ const bcrypt=require('bcryptjs');
 const usuarioModelo=require('../Modelo/usuario_modelo');
 const { firmarToken, tokenModelo } = require('./autenticacion_middleware');
 
+function sinContrasena(usuario) {
+  const { contrasena_hash, ...resto } = usuario;
+  return resto;
+}
+
 const CAMPOS_REGISTRO = ['nombre', 'apellidoP', 'apellidoM', 'correo', 'contrasena'];
 
 async function registrar(req, res) {
@@ -61,8 +66,7 @@ async function iniciarSesion(req,res) {
 }
 
 async function verPerfil(req,res) {
-  const usuario=await usuarioModelo.listarUsuario(req.sesion.id);
-  if(!usuario)return res.status(404).json({error:'No encontramos tu cuenta'});
+  const usuario=await usuarioModelo.listarUsuarioPorId(req.sesion.id);  if(!usuario)return res.status(404).json({error:'No encontramos tu cuenta'});
   res.json({usuario});
 }
 

@@ -2,7 +2,7 @@ const crypto=require('crypto');
 const jwt=require('jsonwebtoken');
 const pool=require('../bd');
 const usuarioModelo=require('../Modelo/usuario_modelo');
-const {crearModeloToken}=require('../Modelo/token_modelo');
+const {crearModeloToken}=require('../Modelo/tokenrevocado_modelo');
 
 const tokenModelo=crearModeloToken(pool);
 
