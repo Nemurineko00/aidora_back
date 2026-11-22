@@ -1,4 +1,5 @@
 const modeloPublicacion = require('../modelo/publicacion');
+const { actualizarPunto } = require('../Modelo/publicacion_modelo');
 
 async function obtenerPublicaciones(req, res) {
     
@@ -54,6 +55,17 @@ async function actualizarCantidaMedicamento(req, res) {
     res.json(publicacion);
 }
 
+async function actualizarPunto(req, res) {
+    
+    const publicacion = await modeloPublicacion.actualizarPunto(Number(req.params.id), Number(req.params.id));
+
+    if(!publicacion){
+        return res.status(404).json({mensaje : 'Publicacion no encontrada'});
+    }
+
+    res.json(publicacion);
+}
+
 async function cancelarPublicacion(req, res) {
     
     const publicacion = await modeloPublicacion.cancelarPublicacion(Number(req.params.id));
@@ -76,4 +88,4 @@ async function eliminarPublicacion(req, res) {
     res.json(publicacion);
 }
 
-module.exports = {obtenerPublicaciones, obtenerPublicacionesDisponibles, obtenerPublicacionesPorId, crearPublicacion, actualizarEstadoPublicacion, actualizarCantidaMedicamento, cancelarPublicacion, eliminarPublicacion};
+module.exports = {obtenerPublicaciones, obtenerPublicacionesDisponibles, obtenerPublicacionesPorId, crearPublicacion, actualizarEstadoPublicacion, actualizarCantidaMedicamento, actualizarPunto,cancelarPublicacion, eliminarPublicacion};
