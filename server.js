@@ -32,7 +32,14 @@ const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:3000')
   .map((direccion) => direccion.trim().replace(/\/$/, ''))
   .filter(Boolean);
 
-app.use(cors({ origin: FRONTEND_URL }));
+const PATRON_VERCEL = /^https:\/\/aidora-fron(-[a-z0-9]+)*-nemuri-neko00\.vercel\.app$/;
+
+app.use(cors({
+  origin: (origen, callback) => {
+    const permitido = !origen || FRONTEND_URL.includes(origen) || PATRON_VERCEL.test(origen);
+    callback(null, permitido);
+  },
+}));
 app.use(express.json());
 
 const subirFoto = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }).single('foto');
