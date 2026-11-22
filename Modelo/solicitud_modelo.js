@@ -52,4 +52,11 @@ async function eliminarSolicitudPorId(id_solicitud) {
     return solicitud;
 }
 
-module.exports = {listarSolicitud, listarSolicitudPorId, listarSolicitudesPorUsuario,crearSolicitud, actualizarEstadoSolicitud, listarSolicitudConPuntoEntrega, eliminarSolicitudPorId}
+async function existeSolicitudActiva(id_usuario, id_pub) {
+    const { rows } = await pool.query(`SELECT 1 FROM solicitud WHERE id_usuario = $1 AND id_pub = $2 AND estado IN ('Pendiente', 'Aceptada)`,[id_usuario, id_pub]);
+    
+    return rows.length > 0;
+}
+
+
+module.exports = {listarSolicitud, listarSolicitudPorId, listarSolicitudesPorUsuario,crearSolicitud, actualizarEstadoSolicitud, listarSolicitudConPuntoEntrega, eliminarSolicitudPorId, existeSolicitudActiva}
