@@ -63,13 +63,6 @@ app.post('/api/usuarios/login', usuario.iniciarSesion);
 app.get('/api/usuarios/perfil', soloUsuario, usuario.verPerfil);
 app.post('/api/usuarios/logout', soloUsuario, usuario.cerrarSesion);
 
-app.post('/api/solicitudes', soloUsuario, solicitud.crearSolicitud);
-app.get('/api/solicitudes/mias', soloUsuario, solicitud.listarMisSolicitudes);
-app.get('/api/solicitudes/recibidas', soloUsuario, solicitud.listarSolicitudesRecibidas);
-app.patch('/api/solicitudes/:id/aceptar', soloUsuario, solicitud.aceptarSolicitud);
-app.patch('/api/solicitudes/:id/rechazar', soloUsuario, solicitud.rechazarSolicitud);
-app.patch('/api/solicitudes/:id/entregar', soloUsuario, solicitud.marcarEntregada);
-
 app.post('/api/reportes', soloUsuario, subirFoto, reporte.crearReporte);
 
 app.post('/api/admin/login', sesion.iniciarSesionAdmin);
