@@ -3,7 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 
-const solicitud = require('./Controlador/solicitud_controlador');
+
+//suban el controlador pls
+// const solicitud = require('./Controlador/solicitud_controlador');//
 const pool = require('./bd');
 const medicamento = require('./Controlador/medicamento_controlador');
 const admin = require('./Controlador/admin_controlador');
