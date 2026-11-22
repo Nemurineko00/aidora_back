@@ -14,6 +14,12 @@ async function listarSolicitudPorId(id_solicitud){
     return rows[0];
 }
 
+async function listarSolicitudesPorUsuario(id_usuario) {
+    const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM solicitud s WHERE s.id_usuario = $1`, [id_usuario]);
+
+    return  rows[0];
+}
+
 async function crearSolicitud({id_usuario, id_pub}) {
     const { rows } = await pool.query(`INSERT INTO solicitud (id_usuario, id_pub) VALUES ($1, $2) RETURNING *`, [id_usuario, id_pub]);
 
@@ -46,4 +52,4 @@ async function eliminarSolicitudPorId(id_solicitud) {
     return solicitud;
 }
 
-module.exports = {listarSolicitud, listarSolicitudPorId, crearSolicitud, actualizarEstadoSolicitud, listarSolicitudConPuntoEntrega, eliminarSolicitudPorId}
+module.exports = {listarSolicitud, listarSolicitudPorId, listarSolicitudesPorUsuario,crearSolicitud, actualizarEstadoSolicitud, listarSolicitudConPuntoEntrega, eliminarSolicitudPorId}
