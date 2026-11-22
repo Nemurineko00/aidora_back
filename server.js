@@ -64,12 +64,22 @@ app.get('/api/usuarios/perfil', soloUsuario, usuario.verPerfil);
 app.put('/api/usuarios/perfil', soloUsuario, usuario.editarPerfil);
 app.post('/api/usuarios/logout', soloUsuario, usuario.cerrarSesion);
 
-//app.post('/api/solicitudes', soloUsuario, solicitud.crearSolicitud);
-//app.get('/api/solicitudes/mias', soloUsuario, solicitud.listarMisSolicitudes);
-//app.get('/api/solicitudes/recibidas', soloUsuario, solicitud.listarSolicitudesRecibidas);
-//app.patch('/api/solicitudes/:id/aceptar', soloUsuario, solicitud.aceptarSolicitud);
-//app.patch('/api/solicitudes/:id/rechazar', soloUsuario, solicitud.rechazarSolicitud);
-//app.patch('/api/solicitudes/:id/entregar', soloUsuario, solicitud.marcarEntregada);
+app.get('/api/publicaciones', soloUsuario, publicacion.obtenerPublicacionesDisponibles);
+app.get('/api/publicaciones/mias', soloUsuario, publicacion.obtenerMisPublicaciones);
+app.get('/api/publicaciones/:id', soloUsuario, publicacion.obtenerPublicacionesPorId);
+app.post('/api/publicaciones', soloUsuario, subirFoto, publicacion.crearPublicacion);
+app.put('/api/publicaciones/:id', soloUsuario, subirFoto, publicacion.actualizarPublicacion);
+app.patch('/api/publicaciones/:id/cantidad', soloUsuario, publicacion.actualizarCantidaMedicamento);
+app.patch('/api/publicaciones/:id/punto', soloUsuario, publicacion.actualizarPunto);
+app.patch('/api/publicaciones/:id/cancelar', soloUsuario, publicacion.cancelarPublicacion);
+app.delete('/api/publicaciones/:id', soloUsuario, publicacion.eliminarPublicacion);
+
+app.post('/api/solicitudes', soloUsuario, solicitud.crearSolicitud);
+app.get('/api/solicitudes/mias', soloUsuario, solicitud.obtenerSolicitudPorUsuario);
+app.get('/api/solicitudes/recibidas', soloUsuario, solicitud.obtenerSolicitudesRecibidas);
+app.get('/api/solicitudes/:id', soloUsuario, solicitud.obtenerSolicitudCompleta);
+app.patch('/api/solicitudes/:id/estado', soloUsuario, solicitud.actualizarEstadoSolicitud);
+app.delete('/api/solicitudes/:id', soloUsuario, solicitud.eliminarSolicitud);
 
 app.post('/api/reportes', soloUsuario, subirFoto, reporte.crearReporte);
 

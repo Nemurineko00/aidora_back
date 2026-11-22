@@ -18,8 +18,7 @@ async function listarReportes() {
 
 async function listarReportePorId(id_reporte) {
 
-  const { rows } = await pool.query(`${CONSULTA_REPORTES} WHERE r.id_reporte = $1 GROUP BY r.id_reporte, ep.id_usuario, u.email`);
-
+  const { rows } = await pool.query(`${CONSULTA_REPORTES} WHERE r.id_reporte = $1 GROUP BY r.id_reporte, ep.id_usuario, u.email`, [id_reporte]);
   return rows[0];
 }
 
@@ -30,7 +29,7 @@ async function buscarReportePendiente(id_usuario, id_pub) {
   return rows[0];
 }
 
-async function crearReporte({id_pub, id_usuario, motivo, evidencia=null}) {
+async function crearReporte({id_pub, id_usuario, motivos, evidencia=null}) {
 
   const cliente = await pool.connect();
   let id_reporte;
@@ -76,9 +75,6 @@ async function actualizarDetalleReporte(id_reporte,{motivo, evidencia}) {
 
   return listarReportePorId(id_reporte);
 }
-
-
-
 
 
 module.exports = { listarReportes, listarReportePorId, buscarReportePendiente, crearReporte, actualizarEstatusReporte, actualizarDetalleReporte};
