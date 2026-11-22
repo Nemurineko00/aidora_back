@@ -1,14 +1,16 @@
 const pool = require('../bd');
 
 const CONSULTA_REPORTES = `SELECT r.id_reporte, r.id_pub, r.id_usuario, r.id_admin, r.fecha_reporte, r.estatus,
+        ep.id_usuario AS id_reportado, u.email AS email_reportante,
         COALESCE(json_agg(json_build_object('id_detalle_rep', dr.id_detalle_rep, 'motivo', dr.motivo, 'evidencia', dr.evidencia)
             ORDER BY dr.id_detalle_rep) FILTER (WHERE dr.id_detalle_rep IS NOT NULL), '[]') AS motivos
     FROM reporte r
+    LEFT JOIN encabezado_pub ep ON r.id_pub = ep.id_pub
+    LEFT JOIN usuario u ON r.id_usuario = u.id_usuario
     LEFT JOIN detalle_reporte dr ON r.id_reporte = dr.id_reporte`;
 
 async function listarReportes() {
-
-  const { rows } = await pool.query(`${CONSULTA_REPORTES} GROUP BY r.id_reporte ORDER BY r.id_reporte`);
+  const { rows } = await pool.query(`${CONSULTA_REPORTES} GROUP BY r.id_reporte, ep.id_usuario, u.email`);
 
 
   return rows;
@@ -16,7 +18,7 @@ async function listarReportes() {
 
 async function listarReportePorId(id_reporte) {
 
-  const { rows } = await pool.query(`${CONSULTA_REPORTES} WHERE r.id_reporte = $1 GROUP BY r.id_reporte`, [id_reporte]);
+  const { rows } = await pool.query(`${CONSULTA_REPORTES} WHERE r.id_reporte = $1 GROUP BY r.id_reporte, ep.id_usuario, u.email`);
 
   return rows[0];
 }
@@ -79,4 +81,4 @@ async function actualizarDetalleReporte(id_reporte,{motivo, evidencia}) {
 
 
 
-module.exports = { listarReportes, listarReportePorId, crearReporte, actualizarEstatusReporte, actualizarDetalleReporte};
+module.exports = { listarReportes, listarReportePorId, buscarReportePendiente, crearReporte, actualizarEstatusReporte, actualizarDetalleReporte};

@@ -68,7 +68,15 @@ app.get('/api/puntos-entrega', puntoEntrega.listarPuntosActivos);
 app.post('/api/usuarios/registro', usuario.registrar);
 app.post('/api/usuarios/login', usuario.iniciarSesion);
 app.get('/api/usuarios/perfil', soloUsuario, usuario.verPerfil);
+app.put('/api/usuarios/perfil', soloUsuario, usuario.editarPerfil);
 app.post('/api/usuarios/logout', soloUsuario, usuario.cerrarSesion);
+
+//app.post('/api/solicitudes', soloUsuario, solicitud.crearSolicitud);
+//app.get('/api/solicitudes/mias', soloUsuario, solicitud.listarMisSolicitudes);
+//app.get('/api/solicitudes/recibidas', soloUsuario, solicitud.listarSolicitudesRecibidas);
+//app.patch('/api/solicitudes/:id/aceptar', soloUsuario, solicitud.aceptarSolicitud);
+//app.patch('/api/solicitudes/:id/rechazar', soloUsuario, solicitud.rechazarSolicitud);
+//app.patch('/api/solicitudes/:id/entregar', soloUsuario, solicitud.marcarEntregada);
 
 app.post('/api/reportes', soloUsuario, subirFoto, reporte.crearReporte);
 
@@ -76,7 +84,7 @@ app.post('/api/admin/login', sesion.iniciarSesionAdmin);
 app.get('/api/admin/usuarios',soloAdmin, admin.listarUsuarios);
 app.delete('/api/admin/usuarios/:id',soloAdmin, admin.eliminarUsuario);
 app.get('/api/admin/reportes',soloAdmin, admin.listarReportes);
-app.patch('/api/admin/reportes/:id', soloAdmin, admin.revisarReporte)
+app.patch('/api/admin/reportes/:id', soloAdmin, admin.revisarReporte);
 
 app.post('/api/ong/login', sesion.iniciarSesionOng);
 app.get('/api/ong/donaciones', soloOng,donacion.listarDonaciones);
