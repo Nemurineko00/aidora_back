@@ -3,9 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 
-
-//suban el controlador pls
-// const solicitud = require('./Controlador/solicitud_controlador');//
+const publicacion = require('./Controlador/publicacion_controlador');
+const solicitud = require('./Controlador/solicitud_controlador');
 const pool = require('./bd');
 const medicamento = require('./Controlador/medicamento_controlador');
 const admin = require('./Controlador/admin_controlador');
@@ -71,12 +70,23 @@ app.get('/api/usuarios/perfil', soloUsuario, usuario.verPerfil);
 app.put('/api/usuarios/perfil', soloUsuario, usuario.editarPerfil);
 app.post('/api/usuarios/logout', soloUsuario, usuario.cerrarSesion);
 
-//app.post('/api/solicitudes', soloUsuario, solicitud.crearSolicitud);
-//app.get('/api/solicitudes/mias', soloUsuario, solicitud.listarMisSolicitudes);
-//app.get('/api/solicitudes/recibidas', soloUsuario, solicitud.listarSolicitudesRecibidas);
-//app.patch('/api/solicitudes/:id/aceptar', soloUsuario, solicitud.aceptarSolicitud);
-//app.patch('/api/solicitudes/:id/rechazar', soloUsuario, solicitud.rechazarSolicitud);
-//app.patch('/api/solicitudes/:id/entregar', soloUsuario, solicitud.marcarEntregada);
+app.get('/api/solicitudes', soloUsuario, solicitud.obtenerSolicitudes);
+app.get('/api/solicitudes/mias', soloUsuario, solicitud.obtenerSolicitudPorUsuario);
+app.get('/api/solicitudes/:id', soloUsuario, solicitud.obtenerSolicitudPorId);
+app.get('/api/solicitudes/:id/completa', soloUsuario, solicitud.obtenerSolicitudCompleta);
+app.post('/api/solicitudes', soloUsuario, solicitud.crearSolicitud);
+app.patch('/api/solicitudes/:id/estado', soloUsuario, solicitud.actualizarEstadoSolicitud);
+app.delete('/api/solicitudes/:id', soloUsuario, solicitud.eliminarSolicitud);
+
+app.get('/api/publicaciones', soloUsuario, publicacion.obtenerPublicaciones);
+app.get('/api/publicaciones/disponibles', soloUsuario, publicacion.obtenerPublicacionesDisponibles);
+app.get('/api/publicaciones/:id', soloUsuario, publicacion.obtenerPublicacionesPorId);
+app.post('/api/publicaciones', soloUsuario, publicacion.crearPublicacion);
+app.patch('/api/publicaciones/:id/estado', soloUsuario, publicacion.actualizarEstadoPublicacion);
+app.patch('/api/publicaciones/:id/cantidad', soloUsuario, publicacion.actualizarCantidaMedicamento);
+app.patch('/api/publicaciones/:id/punto', soloUsuario, publicacion.actualizarPunto);
+app.patch('/api/publicaciones/:id/cancelar', soloUsuario, publicacion.cancelarPublicacion);
+app.delete('/api/publicaciones/:id', soloUsuario, publicacion.eliminarPublicacion);
 
 app.post('/api/reportes', soloUsuario, subirFoto, reporte.crearReporte);
 
