@@ -76,3 +76,4 @@ async function actualizarPunto(id_pub, id_punto) {
 }
 
 module.exports = { listarPublicaciones, listarPublicacionesPorId, listarPublicacionesDisponibles, crearPublicacion, actualizarEstadoPublicacion, actualizarCantidaMedi, cancelarPublicacion, eliminarPublicacionPorId, actualizarPunto };
+
