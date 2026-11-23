@@ -15,7 +15,6 @@ const puntoEntrega = require('./Controlador/puntoentrega_controlador');
 
 const reporte = require('./Controlador/reporte_controlador');
 
-
 const { verificarToken, soloRol } = require('./Controlador/autenticacion_middleware');
 
 if (!process.env.JWT_SECRET) {
@@ -39,7 +38,7 @@ app.use(cors({
     callback(null, permitido);
   },
 }));
-app.use(express.json());
+app.use(express.json({ limit: '20kb' }));
 
 const subirFoto = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }).single('foto');
 
@@ -76,7 +75,6 @@ app.get('/api/salud', async (req, res) => {
     });
   }
 });
-
 
 app.get('/api/medicamentos', medicamento.listarMedicamentos);
 app.get('/api/puntos-entrega', puntoEntrega.listarPuntosActivos);
@@ -138,6 +136,23 @@ app.use((error, req, res, next) => {
   }
   if (error.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ error: 'La imagen no puede pesar más de 5 MB' });
+  }
+  if (error.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Los datos enviados son demasiado grandes' });
+  }
+  const ERRORES_BD = {
+    '23502': 'Falta un dato obligatorio',
+    '23505': 'Ese registro ya existe',
+    '23503': 'Uno de los datos hace referencia a algo que no existe',
+    '23514': 'Uno de los datos no cumple las reglas permitidas',
+    '22001': 'Uno de los textos es demasiado largo',
+    '22003': 'Uno de los números está fuera de rango',
+    '22007': 'Una de las fechas no es válida',
+    '22008': 'Una de las fechas no es válida',
+    '22P02': 'Uno de los datos no tiene el formato correcto',
+  };
+  if (ERRORES_BD[error.code]) {
+    return res.status(400).json({ error: ERRORES_BD[error.code] });
   }
   res.status(500).json({ error: 'Ocurrió un error en el servidor, intenta más tarde' });
 });

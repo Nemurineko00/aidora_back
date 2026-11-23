@@ -1,6 +1,15 @@
 const modeloSolicitud = require('../Modelo/solicitud_modelo');
 const modeloPublicacion = require('../Modelo/publicacion_modelo');
 const modeloDonacion = require('../Modelo/donacion_modelo');
+const { validar } = require('./validaciones');
+
+function idInvalido(req, res) {
+    if (validar.id(req.params.id)) {
+        res.status(400).json({ error: 'La solicitud no es válida' });
+        return true;
+    }
+    return false;
+}
 
 async function puedeVerSolicitud(solicitud, id_usuario) {
     if (solicitud.id_usuario === id_usuario) return true;
@@ -20,6 +29,7 @@ async function obtenerSolicitudes(req, res, next) {
 
 async function obtenerSolicitudPorId(req, res, next) {
     try{
+        if (idInvalido(req, res)) return;
         const solicitud = await modeloSolicitud.listarSolicitudPorId(Number(req.params.id));
 
         if(!solicitud){
@@ -38,6 +48,7 @@ async function obtenerSolicitudPorId(req, res, next) {
 
 async function obtenerSolicitudCompleta(req, res, next) {
     try{
+        if (idInvalido(req, res)) return;
         const solicitud = await modeloSolicitud.listarSolicitudConPuntoEntrega(Number(req.params.id));
 
         if(!solicitud){
@@ -67,7 +78,7 @@ async function obtenerSolicitudPorUsuario(req, res, next) {
 async function crearSolicitud(req, res, next) {
     try{
         const id_pub = Number(req.body?.id_pub);
-        if (!Number.isInteger(id_pub) || id_pub <= 0) {
+        if (validar.id(id_pub)) {
             return res.status(400).json({error: 'Indica la publicación que quieres solicitar'});
         }
         const publicacion = await modeloPublicacion.listarPublicacionesPorId(id_pub);
@@ -100,6 +111,7 @@ async function crearSolicitud(req, res, next) {
 
 async function actualizarEstadoSolicitud(req, res, next) {
     try{
+        if (idInvalido(req, res)) return;
         const estado = req.body?.estado;
         if (!['Aceptada', 'Rechazada'].includes(estado)) {
             return res.status(400).json({ error: 'Solo puedes aceptar o rechazar la solicitud' });
@@ -125,6 +137,7 @@ async function actualizarEstadoSolicitud(req, res, next) {
 
 async function eliminarSolicitud(req, res, next) {
     try{
+        if (idInvalido(req, res)) return;
 
         const solicitud = await modeloSolicitud.listarSolicitudPorId(Number(req.params.id));
 

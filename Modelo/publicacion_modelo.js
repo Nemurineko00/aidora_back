@@ -29,7 +29,7 @@ async function crearPublicacion({id_usuario, id_medicamento, medicamento, id_pun
     if (!id_medicamento) {
       const nuevo = await cliente.query(
         `INSERT INTO medicamento (nombre_comercial, nombre_generico, codigo_rs, lote, fecha_caducidad, imagen_empaque) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_medicamento`,
-        [medicamento.nombre_comercial || null, medicamento.nombre_generico, medicamento.codigo_rs, medicamento.lote, medicamento.fecha_caducidad, medicamento.imagen_empaque || null]
+        [medicamento.nombre_comercial || medicamento.nombre_generico, medicamento.nombre_generico, medicamento.codigo_rs, medicamento.lote, medicamento.fecha_caducidad, medicamento.imagen_empaque || null]
       );
       id_medicamento = nuevo.rows[0].id_medicamento;
     }
@@ -122,8 +122,8 @@ async function actualizarPublicacionCompleta(id_pub, { medicamento, id_punto, ca
     }
 
     await cliente.query(
-      `UPDATE medicamento SET nombre_generico = $1, codigo_rs = $2, lote = $3, fecha_caducidad = $4 WHERE id_medicamento = $5`,
-      [medicamento.nombre_generico, medicamento.codigo_rs, medicamento.lote, medicamento.fecha_caducidad, detalle.rows[0].id_medicamento]
+      `UPDATE medicamento SET nombre_generico = $1, codigo_rs = $2, lote = $3, fecha_caducidad = $4, nombre_comercial = $6 WHERE id_medicamento = $5`,
+      [medicamento.nombre_generico, medicamento.codigo_rs, medicamento.lote, medicamento.fecha_caducidad, detalle.rows[0].id_medicamento, medicamento.nombre_comercial || medicamento.nombre_generico]
     );
 
     await cliente.query('COMMIT');

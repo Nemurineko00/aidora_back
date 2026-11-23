@@ -1,5 +1,6 @@
 const modeloPublicacion = require('../Modelo/publicacion_modelo');
 const modeloDonacion = require('../Modelo/donacion_modelo');
+const { validar, limpiar } = require('./validaciones');
 
 async function obtenerPublicaciones(req, res) {
     
@@ -16,6 +17,7 @@ async function obtenerPublicacionesDisponibles(req, res) {
 }
 
 async function obtenerPublicacionesPorId(req, res) {
+    if (idInvalido(req, res)) return;
     
     const publicacion = await modeloPublicacion.listarPublicacionesPorId(Number(req.params.id));
 
@@ -26,33 +28,39 @@ async function obtenerPublicacionesPorId(req, res) {
     res.json(publicacion);
 }
 
-// Lee y valida los datos del medicamento que manda el formulario.
-// Devuelve { medicamento } si todo está bien o { error } con el mensaje para el usuario.
 function leerMedicamento(datos) {
-    const medicamento = {
-        nombre_comercial: String(datos.nombre_comercial || '').trim(),
-        nombre_generico: String(datos.nombre_generico || '').trim(),
-        codigo_rs: String(datos.codigo_rs || '').trim(),
-        lote: String(datos.lote || '').trim(),
-        fecha_caducidad: String(datos.fecha_caducidad || '').trim(),
+    const error =
+        validar.nombreMedicamento(datos.nombre_generico) ||
+        (limpiar(datos.nombre_comercial) ? validar.nombreMedicamento(datos.nombre_comercial, 'El nombre comercial') : null) ||
+        validar.lote(datos.lote) ||
+        validar.registroSanitario(datos.codigo_rs) ||
+        validar.fechaCaducidad(datos.fecha_caducidad);
+    if (error) return { error };
+
+    const nombre_generico = limpiar(datos.nombre_generico);
+    return {
+        medicamento: {
+            nombre_generico,
+            nombre_comercial: limpiar(datos.nombre_comercial) || nombre_generico,
+            codigo_rs: limpiar(datos.codigo_rs).toUpperCase(),
+            lote: limpiar(datos.lote).toUpperCase(),
+            fecha_caducidad: limpiar(datos.fecha_caducidad),
+        },
     };
-    if (!medicamento.nombre_generico) return { error: 'El nombre del medicamento es obligatorio' };
-    if (!medicamento.lote) return { error: 'El número de lote es obligatorio' };
-    if (!medicamento.codigo_rs) return { error: 'El registro sanitario (RS) es obligatorio' };
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(medicamento.fecha_caducidad)) {
-        return { error: 'La fecha de caducidad no es válida (AAAA-MM-DD)' };
-    }
-    const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
-    if (medicamento.fecha_caducidad <= hoy) return { error: 'El medicamento debe caducar después de hoy' };
-    return { medicamento };
 }
 
 function leerCantidadYPunto(datos) {
-    const cantidad = Number(datos.cantidad);
-    const id_punto = Number(datos.id_punto);
-    if (!Number.isInteger(cantidad) || cantidad <= 0) return { error: 'La cantidad debe ser un número entero mayor a 0' };
-    if (!Number.isInteger(id_punto) || id_punto <= 0) return { error: 'Selecciona un punto de entrega' };
-    return { cantidad, id_punto };
+    const error = validar.cantidad(datos.cantidad) || (validar.id(datos.id_punto) ? 'Selecciona un punto de entrega' : null);
+    if (error) return { error };
+    return { cantidad: Number(datos.cantidad), id_punto: Number(datos.id_punto) };
+}
+
+function idInvalido(req, res) {
+    if (validar.id(req.params.id)) {
+        res.status(400).json({ error: 'La publicación no es válida' });
+        return true;
+    }
+    return false;
 }
 
 async function crearPublicacion(req, res) {
@@ -85,7 +93,6 @@ async function crearPublicacion(req, res) {
     }
 }
 
-// GET /api/publicaciones/mias: mis publicaciones, cada una con sus solicitudes
 async function obtenerMisPublicaciones(req, res) {
     const [publicaciones, solicitudes] = await Promise.all([
         modeloPublicacion.listarPublicacionesDeUsuario(req.sesion.id),
@@ -97,8 +104,6 @@ async function obtenerMisPublicaciones(req, res) {
     })));
 }
 
-// GET /api/publicaciones/:id/detalle?solicitud=ID
-// Devuelve la publicación, si es mía y la donación en la que participo (si hay una).
 async function obtenerDetallePublicacion(req, res) {
     const id_pub = Number(req.params.id);
     if (!Number.isInteger(id_pub) || id_pub <= 0) return res.status(400).json({ error: 'La publicación no es válida' });
@@ -119,7 +124,6 @@ async function obtenerDetallePublicacion(req, res) {
         donacion = (await modeloDonacion.ultimaSolicitudDeUsuario(yo, id_pub)) || null;
     }
 
-    // Si no es mía, no participo y ya no está disponible, no se puede ver
     if (!es_mia && !donacion && publicacion.estado !== 'Disponible') {
         return res.status(404).json({ error: 'Publicacion no encontrada' });
     }
@@ -127,7 +131,6 @@ async function obtenerDetallePublicacion(req, res) {
     res.json({ publicacion, es_mia, donacion: donacion ? { ...donacion, mi_rol: donacion.id_donante === yo ? 'DONANTE' : 'RECEPTOR' } : null });
 }
 
-// PUT /api/publicaciones/:id: editar medicamento, punto y cantidad (solo si sigue Disponible)
 async function actualizarPublicacion(req, res) {
     const id_pub = Number(req.params.id);
     if (!Number.isInteger(id_pub) || id_pub <= 0) return res.status(400).json({ error: 'La publicación no es válida' });
@@ -155,6 +158,7 @@ async function actualizarPublicacion(req, res) {
 }
 
 async function actualizarEstadoPublicacion(req, res) {
+    if (idInvalido(req, res)) return;
     
     const publicacion = await verificarPropietarioPublicacion(Number(req.params.id), req.sesion.id);
 
@@ -176,11 +180,10 @@ async function actualizarEstadoPublicacion(req, res) {
 }
 
 async function actualizarCantidaMedicamento(req, res) {
+    if (idInvalido(req, res)) return;
+    const errorCantidad = validar.cantidad(req.body?.cantidad);
+    if (errorCantidad) return res.status(400).json({ error: errorCantidad });
     const cantidad = Number(req.body.cantidad);
-
-    if(!Number.isInteger(cantidad) || cantidad <= 0){
-        return res.status(400).json({error: 'La cantidad debe ser un número entero mayor a 0'});
-    }
 
     const dueno = await verificarPropietarioPublicacion(Number(req.params.id), req.sesion.id);
 
@@ -198,6 +201,7 @@ async function actualizarCantidaMedicamento(req, res) {
 }
 
 async function actualizarPunto(req, res) {
+    if (idInvalido(req, res)) return;
     
     const publicacion = await verificarPropietarioPublicacion(Number(req.params.id), req.sesion.id);
 
@@ -209,12 +213,15 @@ async function actualizarPunto(req, res) {
         return res.status(403).json({error: 'Esta publicacion no es tuya'});
     }
 
+    if (validar.id(req.body?.id_punto)) return res.status(400).json({ error: 'Selecciona un punto de entrega' });
+
     const resultado = await modeloPublicacion.actualizarPunto(Number(req.params.id), Number(req.body.id_punto))
 
     res.json(resultado);
 }
 
 async function cancelarPublicacion(req, res) {
+    if (idInvalido(req, res)) return;
     
     const publicacion = await verificarPropietarioPublicacion(Number(req.params.id), req.sesion.id);
 
@@ -231,6 +238,7 @@ async function cancelarPublicacion(req, res) {
 }
 
 async function eliminarPublicacion(req, res) {
+    if (idInvalido(req, res)) return;
     
     const publicacion = await verificarPropietarioPublicacion(Number(req.params.id), req.sesion.id);
 
