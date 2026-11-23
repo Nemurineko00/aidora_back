@@ -1,5 +1,6 @@
 const modeloSolicitud = require('../Modelo/solicitud_modelo');
 const modeloPublicacion = require('../Modelo/publicacion_modelo');
+const modeloDonacion = require('../Modelo/donacion_modelo');
 
 async function puedeVerSolicitud(solicitud, id_usuario) {
     if (solicitud.id_usuario === id_usuario) return true;
@@ -65,7 +66,11 @@ async function obtenerSolicitudPorUsuario(req, res, next) {
 
 async function crearSolicitud(req, res, next) {
     try{
-        const publicacion = await modeloPublicacion.listarPublicacionesPorId(req.body.id_pub);
+        const id_pub = Number(req.body?.id_pub);
+        if (!Number.isInteger(id_pub) || id_pub <= 0) {
+            return res.status(400).json({error: 'Indica la publicación que quieres solicitar'});
+        }
+        const publicacion = await modeloPublicacion.listarPublicacionesPorId(id_pub);
 
         if(!publicacion){
             return res.status(404).json({error : 'Publicacion no encontrada'});
@@ -79,13 +84,13 @@ async function crearSolicitud(req, res, next) {
             return res.status(400).json({error: 'No puedes solicitar tu propia publicacion'});
         }
 
-        const existe = await modeloSolicitud.existeSolicitudActiva(req.sesion.id, req.body.id_pub);
+        const existe = await modeloSolicitud.existeSolicitudActiva(req.sesion.id, id_pub);
 
         if(existe){
             return res.status(400).json({error: 'Ya tienes una solicitud activa para esta publicacion'});
         }
 
-        const solicitud = await modeloSolicitud.crearSolicitud({id_usuario: req.sesion.id, id_pub: req.body.id_pub});
+        const solicitud = await modeloSolicitud.crearSolicitud({id_usuario: req.sesion.id, id_pub});
 
         res.status(201).json(solicitud);
     }catch (error){
@@ -95,20 +100,24 @@ async function crearSolicitud(req, res, next) {
 
 async function actualizarEstadoSolicitud(req, res, next) {
     try{
-        const ESTADOS = ['Aceptada', 'Rechazada', 'Completada'];
-
-        if (!ESTADOS.includes(req.body.estado)) return res.status(400).json({ error: 'Estado no válido' });
+        const estado = req.body?.estado;
+        if (!['Aceptada', 'Rechazada'].includes(estado)) {
+            return res.status(400).json({ error: 'Solo puedes aceptar o rechazar la solicitud' });
+        }
 
         const solicitud = await modeloSolicitud.listarSolicitudPorId(Number(req.params.id));
-
         if (!solicitud) return res.status(404).json({ error: 'Solicitud no encontrada' });
 
         const pub = await modeloPublicacion.listarPublicacionesPorId(solicitud.id_pub);
+        if (!pub || pub.id_usuario !== req.sesion.id) return res.status(403).json({ error: 'Solo el donante puede cambiar esta solicitud' });
 
-        if (pub.id_usuario !== req.sesion.id) return res.status(403).json({ error: 'Solo el donante puede cambiar esta solicitud' });
-        const resultado = await modeloSolicitud.actualizarEstadoSolicitud(Number(req.params.id), req.body.estado);
+        const resultado = estado === 'Aceptada'
+            ? await modeloDonacion.aceptarSolicitud(solicitud.id_solicitud)
+            : await modeloDonacion.rechazarSolicitud(solicitud.id_solicitud);
 
-        res.json(resultado);     
+        if (!resultado) return res.status(409).json({ error: 'Esta solicitud ya fue atendida o la publicación ya no está disponible' });
+
+        res.json(resultado);
     }catch (error){
         next(error);
     }

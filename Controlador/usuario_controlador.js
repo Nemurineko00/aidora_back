@@ -1,5 +1,6 @@
 const bcrypt=require('bcryptjs');
 const usuarioModelo=require('../Modelo/usuario_modelo');
+const ayudanteModelo=require('../Modelo/ayudante_modelo');
 const { firmarToken, tokenModelo } = require('./autenticacion_middleware');
 
 function sinContrasena(usuario) {
@@ -117,4 +118,20 @@ async function editarPerfil(req,res) {
     throw error;
   }
 }
-module.exports = { registrar,iniciarSesion,verPerfil,cerrarSesion,editarPerfil };
+
+async function verAyudante(req, res) {
+  res.json({ ayudante: await ayudanteModelo.obtenerAyudante(req.sesion.id) });
+}
+
+async function guardarAyudante(req, res) {
+  const nombre = String(req.body?.nombre || '').trim();
+  const relacion = String(req.body?.relacion || '').trim().toLowerCase();
+  if (!nombre) return res.status(400).json({ error: 'El nombre del ayudante es obligatorio' });
+  if (nombre.length > 100) return res.status(400).json({ error: 'El nombre no puede pasar de 100 caracteres' });
+  if (!ayudanteModelo.RELACIONES.includes(relacion)) {
+    return res.status(400).json({ error: 'La relación debe ser cuidador, familiar o conocido' });
+  }
+  res.json({ ayudante: await ayudanteModelo.guardarAyudante(req.sesion.id, { nombre, relacion }) });
+}
+
+module.exports = { registrar,iniciarSesion,verPerfil,cerrarSesion,editarPerfil,verAyudante,guardarAyudante };

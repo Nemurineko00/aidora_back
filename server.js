@@ -55,11 +55,9 @@ app.get('/api/salud', async (req, res) => {
     await pool.query('SELECT 1');
     res.json({ servidor: 'funcionando', bd: 'conectada' });
   } catch (error) {
-    // Con varias direcciones (IPv4/IPv6) Node agrupa los errores y el mensaje viene vacío
     const interno = (error.errors && error.errors[0]) || error;
     console.error('La base de datos no responde:', error.code, interno.message);
 
-    // TEMPORAL: datos para diagnosticar (sin contraseña). Bórralo cuando la conexión funcione.
     let hostConfigurado = 'DATABASE_URL no está definida o está vacía';
     if (process.env.DATABASE_URL) {
       try {
@@ -88,6 +86,10 @@ app.post('/api/usuarios/login', usuario.iniciarSesion);
 app.get('/api/usuarios/perfil', soloUsuario, usuario.verPerfil);
 app.put('/api/usuarios/perfil', soloUsuario, usuario.editarPerfil);
 app.post('/api/usuarios/logout', soloUsuario, usuario.cerrarSesion);
+app.get('/api/usuarios/ayudante', soloUsuario, usuario.verAyudante);
+app.put('/api/usuarios/ayudante', soloUsuario, usuario.guardarAyudante);
+
+app.get('/api/donaciones/mias', soloUsuario, donacion.listarMisDonaciones);
 
 app.get('/api/solicitudes/mias', soloUsuario, solicitud.obtenerSolicitudPorUsuario);
 app.get('/api/solicitudes/:id', soloUsuario, solicitud.obtenerSolicitudPorId);
@@ -98,8 +100,11 @@ app.delete('/api/solicitudes/:id', soloUsuario, solicitud.eliminarSolicitud);
 
 app.get('/api/publicaciones', soloUsuario, publicacion.obtenerPublicaciones);
 app.get('/api/publicaciones/disponibles', soloUsuario, publicacion.obtenerPublicacionesDisponibles);
+app.get('/api/publicaciones/mias', soloUsuario, publicacion.obtenerMisPublicaciones);
+app.get('/api/publicaciones/:id/detalle', soloUsuario, publicacion.obtenerDetallePublicacion);
 app.get('/api/publicaciones/:id', soloUsuario, publicacion.obtenerPublicacionesPorId);
 app.post('/api/publicaciones', soloUsuario, publicacion.crearPublicacion);
+app.put('/api/publicaciones/:id', soloUsuario, publicacion.actualizarPublicacion);
 app.patch('/api/publicaciones/:id/estado', soloUsuario, publicacion.actualizarEstadoPublicacion);
 app.patch('/api/publicaciones/:id/cantidad', soloUsuario, publicacion.actualizarCantidaMedicamento);
 app.patch('/api/publicaciones/:id/punto', soloUsuario, publicacion.actualizarPunto);
@@ -111,12 +116,15 @@ app.post('/api/reportes', soloUsuario, subirFoto, reporte.crearReporte);
 app.post('/api/admin/login', sesion.iniciarSesionAdmin);
 app.get('/api/admin/usuarios',soloAdmin, admin.listarUsuarios);
 app.delete('/api/admin/usuarios/:id',soloAdmin, admin.eliminarUsuario);
+app.get('/api/admin/usuarios/:id/historial', soloAdmin, admin.historialUsuario);
 app.get('/api/admin/reportes',soloAdmin, admin.listarReportes);
 app.patch('/api/admin/reportes/:id', soloAdmin, admin.revisarReporte);
 
 app.post('/api/ong/login', sesion.iniciarSesionOng);
 app.get('/api/ong/donaciones', soloOng,donacion.listarDonaciones);
 app.get('/api/ong/donaciones/:id', soloOng,donacion.obtenerDonacion);
+app.patch('/api/ong/donaciones/:id', soloOng, donacion.actualizarEntrega);
+app.post('/api/ong/donaciones/:id/terminar', soloOng, donacion.terminarCiclo);
 
 app.use((req, res) => {
   res.status(404).json({ error: `No existe la ruta ${req.method} ${req.originalUrl}` });

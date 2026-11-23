@@ -104,4 +104,37 @@ async function actualizarPunto(id_pub, id_punto) {
   return listarPublicacionesPorId(id_pub);
 }
 
-module.exports = { listarPublicaciones, listarPublicacionesPorId, listarPublicacionesDisponibles, crearPublicacion, actualizarEstadoPublicacion, actualizarCantidaMedi, cancelarPublicacion, eliminarPublicacionPorId, actualizarPunto };
+async function listarPublicacionesDeUsuario(id_usuario) {
+  const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM encabezado_pub ep JOIN detalle_pub dp ON ep.id_pub = dp.id_pub JOIN medicamento m ON dp.id_medicamento = m.id_medicamento JOIN punto_entrega pe ON dp.id_punto = pe.id_punto WHERE ep.id_usuario = $1 ORDER BY ep.fecha_creacion DESC, ep.id_pub DESC`, [id_usuario]);
+
+  return rows;
+}
+
+async function actualizarPublicacionCompleta(id_pub, { medicamento, id_punto, cantidad }) {
+  const cliente = await pool.connect();
+  try {
+    await cliente.query('BEGIN');
+
+    const detalle = await cliente.query(`UPDATE detalle_pub SET id_punto = $1, cantidad = $2 WHERE id_pub = $3 RETURNING id_medicamento`, [id_punto, cantidad, id_pub]);
+    if (detalle.rowCount === 0) {
+      await cliente.query('ROLLBACK');
+      return undefined;
+    }
+
+    await cliente.query(
+      `UPDATE medicamento SET nombre_generico = $1, codigo_rs = $2, lote = $3, fecha_caducidad = $4 WHERE id_medicamento = $5`,
+      [medicamento.nombre_generico, medicamento.codigo_rs, medicamento.lote, medicamento.fecha_caducidad, detalle.rows[0].id_medicamento]
+    );
+
+    await cliente.query('COMMIT');
+  } catch (error) {
+    await cliente.query('ROLLBACK');
+    throw error;
+  } finally {
+    cliente.release();
+  }
+
+  return listarPublicacionesPorId(id_pub);
+}
+
+module.exports = { listarPublicaciones, listarPublicacionesPorId, listarPublicacionesDisponibles, crearPublicacion, actualizarEstadoPublicacion, actualizarCantidaMedi, cancelarPublicacion, eliminarPublicacionPorId, actualizarPunto, listarPublicacionesDeUsuario, actualizarPublicacionCompleta };
