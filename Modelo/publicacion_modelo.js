@@ -20,8 +20,6 @@ async function listarPublicacionesDisponibles() {
   return rows;
 }
 
-// Si llega id_medicamento se usa ese; si no, se crea el medicamento con los datos del formulario.
-// Todo va en una transacción: o se crean medicamento + encabezado + detalle, o no se crea nada.
 async function crearPublicacion({id_usuario, id_medicamento, medicamento, id_punto, cantidad}) {
   const cliente = await pool.connect();
   let id_pub;
@@ -81,7 +79,6 @@ async function eliminarPublicacionPorId(id_pub){
 
   if (!publicacion) return undefined;
 
-  // En una transacción: o se borra todo o no se borra nada
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');

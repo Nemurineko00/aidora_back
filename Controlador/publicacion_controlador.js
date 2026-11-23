@@ -37,7 +37,6 @@ async function crearPublicacion(req, res) {
         return res.status(400).json({error: 'Selecciona un punto de entrega'});
     }
 
-    // Opción A: usar un medicamento que ya existe
     let id_medicamento = null;
     let medicamento = null;
     if (datos.id_medicamento !== undefined && datos.id_medicamento !== null && datos.id_medicamento !== '') {
@@ -46,7 +45,6 @@ async function crearPublicacion(req, res) {
             return res.status(400).json({error: 'El medicamento no es válido'});
         }
     } else {
-        // Opción B: crear el medicamento con los datos del formulario
         medicamento = {
             nombre_comercial: String(datos.nombre_comercial || '').trim(),
             nombre_generico: String(datos.nombre_generico || '').trim(),

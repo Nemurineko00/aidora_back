@@ -2,7 +2,6 @@ const pool = require('../bd');
 
 function crearModeloToken(pool){
 
-    // Columnas reales de la tabla: jti, id_cuenta, expira_en
     async function revocar(jti, id_cuenta, expira_en) {
         await pool.query('INSERT INTO token_revocado (jti, id_cuenta, expira_en) VALUES ($1, $2, TO_TIMESTAMP($3)) ON CONFLICT (jti) DO NOTHING',[jti, id_cuenta, expira_en]);
     }
