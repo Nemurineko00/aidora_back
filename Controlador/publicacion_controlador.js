@@ -26,14 +26,55 @@ async function obtenerPublicacionesPorId(req, res) {
 }
 
 async function crearPublicacion(req, res) {
-    const cantidad = Number(req.body.cantidad);
+    const datos = req.body || {};
+    const cantidad = Number(datos.cantidad);
+    const id_punto = Number(datos.id_punto);
 
     if(!Number.isInteger(cantidad) || cantidad <= 0){
         return res.status(400).json({error: 'La cantidad debe ser un número mayor a 0'})
     }
-    const publicacion = await modeloPublicacion.crearPublicacion({id_usuario: req.sesion.id, id_medicamento: Number(req.body.id_medicamento), id_punto: Number(req.body.id_punto), cantidad});
+    if(!Number.isInteger(id_punto) || id_punto <= 0){
+        return res.status(400).json({error: 'Selecciona un punto de entrega'});
+    }
 
-    res.status(201).json(publicacion);
+    // Opción A: usar un medicamento que ya existe
+    let id_medicamento = null;
+    let medicamento = null;
+    if (datos.id_medicamento !== undefined && datos.id_medicamento !== null && datos.id_medicamento !== '') {
+        id_medicamento = Number(datos.id_medicamento);
+        if(!Number.isInteger(id_medicamento) || id_medicamento <= 0){
+            return res.status(400).json({error: 'El medicamento no es válido'});
+        }
+    } else {
+        // Opción B: crear el medicamento con los datos del formulario
+        medicamento = {
+            nombre_comercial: String(datos.nombre_comercial || '').trim(),
+            nombre_generico: String(datos.nombre_generico || '').trim(),
+            codigo_rs: String(datos.codigo_rs || '').trim(),
+            lote: String(datos.lote || '').trim(),
+            fecha_caducidad: String(datos.fecha_caducidad || '').trim(),
+        };
+        if (!medicamento.nombre_generico) return res.status(400).json({error: 'El nombre del medicamento es obligatorio'});
+        if (!medicamento.lote) return res.status(400).json({error: 'El número de lote es obligatorio'});
+        if (!medicamento.codigo_rs) return res.status(400).json({error: 'El registro sanitario (RS) es obligatorio'});
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(medicamento.fecha_caducidad)) {
+            return res.status(400).json({error: 'La fecha de caducidad no es válida (AAAA-MM-DD)'});
+        }
+        const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+        if (medicamento.fecha_caducidad <= hoy) {
+            return res.status(400).json({error: 'El medicamento debe caducar después de hoy'});
+        }
+    }
+
+    try {
+        const publicacion = await modeloPublicacion.crearPublicacion({id_usuario: req.sesion.id, id_medicamento, medicamento, id_punto, cantidad});
+        res.status(201).json(publicacion);
+    } catch (error) {
+        if (error.code === '23503') {
+            return res.status(400).json({error: 'El medicamento o el punto de entrega no existen'});
+        }
+        throw error;
+    }
 }
 
 async function actualizarEstadoPublicacion(req, res) {
