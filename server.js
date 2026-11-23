@@ -55,8 +55,27 @@ app.get('/api/salud', async (req, res) => {
     await pool.query('SELECT 1');
     res.json({ servidor: 'funcionando', bd: 'conectada' });
   } catch (error) {
-    console.error('La base de datos no responde:', error.message);
-    res.status(503).json({ servidor: 'funcionando', bd: 'sin conexión', codigo: error.code, detalle: error.message });
+    // Con varias direcciones (IPv4/IPv6) Node agrupa los errores y el mensaje viene vacío
+    const interno = (error.errors && error.errors[0]) || error;
+    console.error('La base de datos no responde:', error.code, interno.message);
+
+    // TEMPORAL: datos para diagnosticar (sin contraseña). Bórralo cuando la conexión funcione.
+    let hostConfigurado = 'DATABASE_URL no está definida o está vacía';
+    if (process.env.DATABASE_URL) {
+      try {
+        hostConfigurado = new URL(process.env.DATABASE_URL).hostname;
+      } catch {
+        hostConfigurado = 'DATABASE_URL tiene un formato inválido';
+      }
+    }
+    res.status(503).json({
+      servidor: 'funcionando',
+      bd: 'sin conexión',
+      codigo: error.code,
+      detalle: interno.message || error.message,
+      intentoConectar: `${interno.address || ''}:${interno.port || ''}`,
+      hostConfigurado,
+    });
   }
 });
 
