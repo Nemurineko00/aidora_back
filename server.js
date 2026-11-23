@@ -56,7 +56,7 @@ app.get('/api/salud', async (req, res) => {
     res.json({ servidor: 'funcionando', bd: 'conectada' });
   } catch (error) {
     console.error('La base de datos no responde:', error.message);
-    res.status(503).json({ servidor: 'funcionando', bd: 'sin conexión' });
+    res.status(503).json({ servidor: 'funcionando', bd: 'sin conexión', codigo: error.code, detalle: error.message });
   }
 });
 
@@ -70,7 +70,6 @@ app.get('/api/usuarios/perfil', soloUsuario, usuario.verPerfil);
 app.put('/api/usuarios/perfil', soloUsuario, usuario.editarPerfil);
 app.post('/api/usuarios/logout', soloUsuario, usuario.cerrarSesion);
 
-app.get('/api/solicitudes', soloUsuario, solicitud.obtenerSolicitudes);
 app.get('/api/solicitudes/mias', soloUsuario, solicitud.obtenerSolicitudPorUsuario);
 app.get('/api/solicitudes/:id', soloUsuario, solicitud.obtenerSolicitudPorId);
 app.get('/api/solicitudes/:id/completa', soloUsuario, solicitud.obtenerSolicitudCompleta);

@@ -1,6 +1,12 @@
 const modeloSolicitud = require('../Modelo/solicitud_modelo');
 const modeloPublicacion = require('../Modelo/publicacion_modelo');
 
+async function puedeVerSolicitud(solicitud, id_usuario) {
+    if (solicitud.id_usuario === id_usuario) return true;
+    const pub = await modeloPublicacion.listarPublicacionesPorId(solicitud.id_pub);
+    return Boolean(pub) && pub.id_usuario === id_usuario;
+}
+
 async function obtenerSolicitudes(req, res, next) {
     try{
         const solicitudes = await modeloSolicitud.listarSolicitud();
@@ -16,7 +22,11 @@ async function obtenerSolicitudPorId(req, res, next) {
         const solicitud = await modeloSolicitud.listarSolicitudPorId(Number(req.params.id));
 
         if(!solicitud){
-            return res.status(404).json({mensaje: 'Solicitud no encontrada'});
+            return res.status(404).json({error: 'Solicitud no encontrada'});
+        }
+
+        if(!(await puedeVerSolicitud(solicitud, req.sesion.id))){
+            return res.status(403).json({error: 'No tienes permiso para ver esta solicitud'});
         }
 
         res.json(solicitud);
@@ -30,8 +40,11 @@ async function obtenerSolicitudCompleta(req, res, next) {
         const solicitud = await modeloSolicitud.listarSolicitudConPuntoEntrega(Number(req.params.id));
 
         if(!solicitud){
+            return res.status(404).json({error: 'Solicitud no encontrada'});
+        }
 
-            return res.status(404).json({ mensaje : 'Solicitud no encontrada'});
+        if(!(await puedeVerSolicitud(solicitud, req.sesion.id))){
+            return res.status(403).json({error: 'No tienes permiso para ver esta solicitud'});
         }
 
         res.json(solicitud);
@@ -42,13 +55,9 @@ async function obtenerSolicitudCompleta(req, res, next) {
 
 async function obtenerSolicitudPorUsuario(req, res, next) {
     try{
-        const solicitud = await modeloSolicitud.listarSolicitudesPorUsuario(Number(req.session.id));
+        const solicitudes = await modeloSolicitud.listarSolicitudesPorUsuario(Number(req.sesion.id));
 
-        if(!solicitud){
-            return res.status(404).json({mensaje: 'Solicitud no encontrada'})
-        }
-
-        res.json(solicitud);
+        res.json(solicitudes);
     }catch(error){
         next(error);
     }
@@ -63,20 +72,20 @@ async function crearSolicitud(req, res, next) {
         }
 
         if(publicacion.estado !== 'Disponible'){
-            return res.status(400)({error: 'La publicacion no esta disponible'});
+            return res.status(400).json({error: 'La publicacion no esta disponible'});
         }
 
-        if(publicacion.id_usuario === req.session.id){
+        if(publicacion.id_usuario === req.sesion.id){
             return res.status(400).json({error: 'No puedes solicitar tu propia publicacion'});
         }
 
-        const existe = await modeloSolicitud.existeSolicitudActiva(req.session.id, req.body.id_pub);
+        const existe = await modeloSolicitud.existeSolicitudActiva(req.sesion.id, req.body.id_pub);
 
         if(existe){
             return res.status(400).json({error: 'Ya tienes una solicitud activa para esta publicacion'});
         }
 
-        const solicitud = await modeloSolicitud.crearSolicitud({id_usuario: req.session.id, id_pub: req.body.id_pub});
+        const solicitud = await modeloSolicitud.crearSolicitud({id_usuario: req.sesion.id, id_pub: req.body.id_pub});
 
         res.status(201).json(solicitud);
     }catch (error){
@@ -96,7 +105,7 @@ async function actualizarEstadoSolicitud(req, res, next) {
 
         const pub = await modeloPublicacion.listarPublicacionesPorId(solicitud.id_pub);
 
-        if (pub.id_usuario !== req.session.id) return res.status(403).json({ error: 'Solo el donante puede cambiar esta solicitud' });
+        if (pub.id_usuario !== req.sesion.id) return res.status(403).json({ error: 'Solo el donante puede cambiar esta solicitud' });
         const resultado = await modeloSolicitud.actualizarEstadoSolicitud(Number(req.params.id), req.body.estado);
 
         res.json(resultado);     
@@ -112,15 +121,15 @@ async function eliminarSolicitud(req, res, next) {
 
         if(!solicitud){
 
-            return res.status(404).json({ mensaje : 'Solicitud no enocntrada'});
+            return res.status(404).json({error: 'Solicitud no enocntrada'});
         }
 
-        if(solicitud.id_usuario !== req.session.id){
-            return res.status(403).json({mensaje: 'Esta solicitud no es tuya'});
+        if(solicitud.id_usuario !== req.sesion.id){
+            return res.status(403).json({error: 'Esta solicitud no es tuya'});
         }
 
         if(solicitud.estado === 'Aceptada' || solicitud.estado === 'Completada'){
-            res.status(400).json({mensaje: 'No se puede eliminar una solicitud aceptada o completada'});
+            return res.status(400).json({error: 'No se puede eliminar una solicitud aceptada o completada'});
         }
 
         const eliminada = await modeloSolicitud.eliminarSolicitudPorId(Number(req.params.id));

@@ -1,6 +1,6 @@
 const pool = require('../bd');
 
-const COLUMNAS_PUBLICAS = 's.solicitud, s.id_usuario, s.id_pub, s.estado';
+const COLUMNAS_PUBLICAS = 's.id_solicitud, s.id_usuario, s.id_pub, s.estado';
 
 async function listarSolicitud() {
     const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM solicitud s ORDER BY s.id_solicitud`);
@@ -17,11 +17,11 @@ async function listarSolicitudPorId(id_solicitud){
 async function listarSolicitudesPorUsuario(id_usuario) {
     const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM solicitud s WHERE s.id_usuario = $1`, [id_usuario]);
 
-    return  rows[0];
+    return rows;
 }
 
 async function crearSolicitud({id_usuario, id_pub}) {
-    const { rows } = await pool.query(`INSERT INTO solicitud (id_usuario, id_pub,estado) VALUES ($1, $2.'Pendiente) RETURNING *`, [id_usuario, id_pub]);
+    const { rows } = await pool.query(`INSERT INTO solicitud (id_usuario, id_pub,estado) VALUES ($1, $2, 'Pendiente') RETURNING *`, [id_usuario, id_pub]);
 
     return rows[0];
 }
@@ -53,7 +53,7 @@ async function eliminarSolicitudPorId(id_solicitud) {
 }
 
 async function existeSolicitudActiva(id_usuario, id_pub) {
-    const { rows } = await pool.query(`SELECT 1 FROM solicitud WHERE id_usuario = $1 AND id_pub = $2 AND estado IN ('Pendiente', 'Aceptada)`,[id_usuario, id_pub]);
+    const { rows } = await pool.query(`SELECT 1 FROM solicitud WHERE id_usuario = $1 AND id_pub = $2 AND estado IN ('Pendiente', 'Aceptada')`,[id_usuario, id_pub]);
     
     return rows.length > 0;
 }
