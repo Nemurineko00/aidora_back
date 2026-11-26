@@ -85,7 +85,7 @@ async function enTransaccion(fn) {
   }
 }
 
-async function aceptarSolicitud(id_solicitud) {
+async function aceptarSolicitud(id_solicitud, fecha_entrega) {
   const ok = await enTransaccion(async (cliente) => {
     const sol = await cliente.query(`SELECT id_pub FROM solicitud WHERE id_solicitud = $1 AND estado = 'Pendiente' FOR UPDATE`, [id_solicitud]);
     if (sol.rowCount === 0) return false;
@@ -94,7 +94,7 @@ async function aceptarSolicitud(id_solicitud) {
     const pub = await cliente.query(`SELECT estado FROM encabezado_pub WHERE id_pub = $1 FOR UPDATE`, [id_pub]);
     if (pub.rows[0]?.estado !== 'Disponible') return false;
 
-    await cliente.query(`UPDATE solicitud SET estado = 'Aceptada', fecha_aceptada = now() WHERE id_solicitud = $1`, [id_solicitud]);
+    await cliente.query(`UPDATE solicitud SET estado = 'Aceptada', fecha_aceptada = now(), fecha_entrega = $1 WHERE id_solicitud = $2`, [fecha_entrega, id_solicitud]);
     await cliente.query(`UPDATE encabezado_pub SET estado = 'Reservado' WHERE id_pub = $1`, [id_pub]);
     await cliente.query(`UPDATE solicitud SET estado = 'Rechazada' WHERE id_pub = $1 AND estado = 'Pendiente' AND id_solicitud <> $2`, [id_pub, id_solicitud]);
     return true;
