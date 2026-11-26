@@ -1,5 +1,7 @@
 const usuarioModelo = require('../Modelo/usuario_modelo');
 const reporteModelo = require('../Modelo/reporte_modelo');
+const publicacionModelo = require('../Modelo/publicacion_modelo');
+const donacionModelo = require('../Modelo/donacion_modelo');
 
 async function listarUsuarios(req, res) {
   res.json({ usuarios:await usuarioModelo.listarUsuario() });
@@ -39,4 +41,18 @@ async function revisarReporte(req, res) {
   res.json({ reporte });
 }
 
-module.exports = { listarUsuarios, eliminarUsuario, listarReportes, revisarReporte };
+async function historialUsuario(req, res) {
+  const id_usuario = Number(req.params.id);
+  if (!Number.isInteger(id_usuario)) return res.status(400).json({ error: 'El id del usuario no es válido' });
+
+  const usuario = await usuarioModelo.listarUsuarioPorId(id_usuario);
+  if (!usuario) return res.status(404).json({ error: 'No encontramos a ese usuario' });
+
+  const [publicaciones, solicitudes] = await Promise.all([
+    publicacionModelo.listarPublicacionesDeUsuario(id_usuario),
+    donacionModelo.listarSolicitudesHechasPor(id_usuario),
+  ]);
+  res.json({ usuario, publicaciones, solicitudes });
+}
+
+module.exports = { listarUsuarios, eliminarUsuario, listarReportes, revisarReporte, historialUsuario };

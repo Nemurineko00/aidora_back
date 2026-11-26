@@ -3,11 +3,11 @@ const pool = require('../bd');
 const CONSULTA_REPORTES = `SELECT r.id_reporte, r.id_pub, r.id_usuario, r.id_admin, r.fecha_reporte, r.estatus,
         ep.id_usuario AS id_reportado, u.email AS email_reportante,
         COALESCE(json_agg(json_build_object('id_detalle_rep', dr.id_detalle_rep, 'motivo', dr.motivo, 'evidencia', dr.evidencia)
-            ORDER BY dr.id_detalle_rep) FILTER (WHERE dr.id_detalle_rep IS NOT NULL), '[]') AS motivos
-    FROM reporte r
-    LEFT JOIN encabezado_pub ep ON r.id_pub = ep.id_pub
-    LEFT JOIN usuario u ON r.id_usuario = u.id_usuario
-    LEFT JOIN detalle_reporte dr ON r.id_reporte = dr.id_reporte`;
+        ORDER BY dr.id_detalle_rep) FILTER (WHERE dr.id_detalle_rep IS NOT NULL), '[]') AS motivos
+        FROM reporte r
+        LEFT JOIN encabezado_pub ep ON r.id_pub = ep.id_pub
+        LEFT JOIN usuario u ON r.id_usuario = u.id_usuario
+        LEFT JOIN detalle_reporte dr ON r.id_reporte = dr.id_reporte`;
 
 async function listarReportes() {
   const { rows } = await pool.query(`${CONSULTA_REPORTES} GROUP BY r.id_reporte, ep.id_usuario, u.email`);
@@ -37,7 +37,7 @@ async function crearReporte({id_pub, id_usuario, motivos, evidencia=null}) {
   try {
     await cliente.query('BEGIN');
 
-    const reporte = await cliente.query(`INSERT INTO reporte (id_pub, id_usuario) VALUES ($1, $2) RETURNING id_reporte`, [id_pub, id_usuario]);
+    const reporte = await cliente.query(`INSERT INTO reporte (id_pub, id_usuario, fecha_reporte, estatus) VALUES ($1, $2, CURRENT_DATE, 'Pendiente') RETURNING id_reporte`, [id_pub, id_usuario]);
     id_reporte = reporte.rows[0].id_reporte;
 
     for (const motivo of motivos) {

@@ -1,6 +1,8 @@
 const bcrypt=require('bcryptjs');
 const usuarioModelo=require('../Modelo/usuario_modelo');
+const ayudanteModelo=require('../Modelo/ayudante_modelo');
 const { firmarToken, tokenModelo } = require('./autenticacion_middleware');
+const { validar, limpiar } = require('./validaciones');
 
 function sinContrasena(usuario) {
   const { contrasena_hash, ...resto } = usuario;
@@ -17,13 +19,15 @@ async function registrar(req, res) {
     return res.status(400).json({ error: `Faltan campos: ${faltantes.join(', ')}` });
   }
 
-  const email = datos.correo.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return res.status(400).json({ error: 'El correo no es válido' });
-  }
-  if (datos.contrasena.length < 6) {
-    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
-  }
+  const errorDatos =
+    validar.nombrePersona(datos.nombre, 'El nombre') ||
+    validar.nombrePersona(datos.apellidoP, 'El apellido paterno') ||
+    validar.nombrePersona(datos.apellidoM, 'El apellido materno') ||
+    validar.correo(datos.correo) ||
+    validar.contrasenaNueva(datos.contrasena);
+  if (errorDatos) return res.status(400).json({ error: errorDatos });
+
+  const email = limpiar(datos.correo).toLowerCase();
   if (await usuarioModelo.buscarPorEmail(email)) {
     return res.status(409).json({ error: 'Ya existe una cuenta con ese correo' });
   }
@@ -32,8 +36,8 @@ async function registrar(req, res) {
 
   try {
     const usuario = await usuarioModelo.crearUsuario({
-      nombre: datos.nombre.trim(),
-      apellido: `${datos.apellidoP.trim()} ${datos.apellidoM.trim()}`,
+      nombre: limpiar(datos.nombre),
+      apellido: `${limpiar(datos.apellidoP)} ${limpiar(datos.apellidoM)}`,
       email,
       contrasenaHash,
     });
@@ -51,6 +55,8 @@ async function iniciarSesion(req,res) {
     if(!correo||!contrasena){
         return res.status(400).json({error:'Escribe tu correo y tu contraseña'});
     }
+    const errorLogin = validar.correo(correo) || validar.contrasenaLogin(contrasena);
+    if (errorLogin) return res.status(400).json({ error: errorLogin });
     const usuario=await usuarioModelo.buscarPorEmail(String(correo).trim().toLowerCase());
     
     if (!usuario || !(await bcrypt.compare(String(contrasena), usuario.contrasena_hash))) {
@@ -82,19 +88,22 @@ async function editarPerfil(req,res) {
 
 
   if(datos.nombre!==undefined){
-    if (!String(datos.nombre).trim()) return res.status(400).json({ error: 'El nombre no puede ir vacío' });
-      cambios.nombre = String(datos.nombre).trim();
+    const errorNombre = validar.nombrePersona(datos.nombre, 'El nombre');
+    if (errorNombre) return res.status(400).json({ error: errorNombre });
+    cambios.nombre = limpiar(datos.nombre);
   }
 
   if (datos.apellido !== undefined) {
-    if (!String(datos.apellido).trim()) return res.status(400).json({ error: 'El apellido no puede ir vacío' });
-    cambios.apellido = String(datos.apellido).trim();
+    const apellido = limpiar(datos.apellido);
+    if (!apellido) return res.status(400).json({ error: 'El apellido es obligatorio' });
+    if (apellido.length > 101) return res.status(400).json({ error: 'El apellido no puede pasar de 101 caracteres' });
+    if (!/^[\p{L}][\p{L}' .-]*$/u.test(apellido)) return res.status(400).json({ error: 'El apellido solo puede llevar letras, espacios, apóstrofo o guion' });
+    cambios.apellido = apellido;
   }
   if (datos.correo !== undefined) {
-    const email = String(datos.correo).trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ error: 'El correo no es válido' });
-    }
+    const errorCorreo = validar.correo(datos.correo);
+    if (errorCorreo) return res.status(400).json({ error: errorCorreo });
+    const email = limpiar(datos.correo).toLowerCase();
     const otro = await usuarioModelo.buscarPorEmail(email);
     if (otro && otro.id_usuario !== req.sesion.id) {
       return res.status(409).json({ error: 'Ese correo ya lo usa otra cuenta' });
@@ -117,4 +126,20 @@ async function editarPerfil(req,res) {
     throw error;
   }
 }
-module.exports = { registrar,iniciarSesion,verPerfil,cerrarSesion,editarPerfil };
+
+async function verAyudante(req, res) {
+  res.json({ ayudante: await ayudanteModelo.obtenerAyudante(req.sesion.id) });
+}
+
+async function guardarAyudante(req, res) {
+  const errorNombre = validar.nombreAyudante(req.body?.nombre);
+  if (errorNombre) return res.status(400).json({ error: errorNombre });
+  const nombre = limpiar(req.body.nombre);
+  const relacion = String(req.body?.relacion || '').trim().toLowerCase();
+  if (!ayudanteModelo.RELACIONES.includes(relacion)) {
+    return res.status(400).json({ error: 'La relación debe ser cuidador, familiar o conocido' });
+  }
+  res.json({ ayudante: await ayudanteModelo.guardarAyudante(req.sesion.id, { nombre, relacion }) });
+}
+
+module.exports = { registrar,iniciarSesion,verPerfil,cerrarSesion,editarPerfil,verAyudante,guardarAyudante };

@@ -23,12 +23,10 @@ async function crearUsuario({nombre, apellido, email, contrasenaHash}) {
   return rows[0];
 }
 
-
 async function actualizarUsuario( id_usuario, { nombre, apellido, email }) {
   const cambios = Object.entries({nombre, apellido, email}).filter(([_, valor]) => valor !== undefined);
 
   if (cambios.length === 0) return listarUsuarioPorId(id_usuario);
-
 
   const columnas = cambios.map(([columna], i) => `${columna} = $${i + 1}`).join(', ');
 
@@ -38,7 +36,6 @@ async function actualizarUsuario( id_usuario, { nombre, apellido, email }) {
   return resultado.rows[0];
 }
 
-//esta es la que vamos a ocupar para eliminar
 async function desactivarUsuarioPorId(id_usuario) {
   const resultado = await pool.query(`UPDATE usuario SET activo = false WHERE id_usuario = $1 RETURNING *`, [id_usuario]);
 
@@ -46,7 +43,6 @@ async function desactivarUsuarioPorId(id_usuario) {
   return resultado.rows[0];
 }
 
-//esta no porque afecta la integridad de la base de datos, solo estará para completar el CRUD
 async function eliminarUsuarioPorId(id_usuario) {
   const {rows} = await pool.query(`DELETE FROM usuario WHERE id_usuario = $1 RETURNING *`, [id_usuario]);
   return rows[0];
