@@ -101,7 +101,7 @@ app.get('/api/publicaciones/disponibles', soloUsuario, publicacion.obtenerPublic
 app.get('/api/publicaciones/mias', soloUsuario, publicacion.obtenerMisPublicaciones);
 app.get('/api/publicaciones/:id/detalle', soloUsuario, publicacion.obtenerDetallePublicacion);
 app.get('/api/publicaciones/:id', soloUsuario, publicacion.obtenerPublicacionesPorId);
-app.post('/api/publicaciones', soloUsuario, publicacion.crearPublicacion);
+app.post('/api/publicaciones', soloUsuario, subirFoto, publicacion.crearPublicacion);
 app.put('/api/publicaciones/:id', soloUsuario, publicacion.actualizarPublicacion);
 app.patch('/api/publicaciones/:id/estado', soloUsuario, publicacion.actualizarEstadoPublicacion);
 app.patch('/api/publicaciones/:id/cantidad', soloUsuario, publicacion.actualizarCantidaMedicamento);
