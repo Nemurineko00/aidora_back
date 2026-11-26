@@ -2,7 +2,7 @@ const pool = require('../bd');
 
 const SELECT_DONACION = `
   SELECT s.id_solicitud, s.id_pub, s.estado, s.entregado, s.recibido,
-         s.fecha_solicitud, s.fecha_aceptada, s.fecha_completada,
+         s.fecha_solicitud, s.fecha_entrega, s.fecha_aceptada, s.fecha_completada,
          ep.estado AS estado_pub, ep.fecha_creacion,
          ep.id_usuario AS id_donante, s.id_usuario AS id_receptor,
          d.nombre AS donante_nombre, d.apellido AS donante_apellido, d.email AS donante_email,
