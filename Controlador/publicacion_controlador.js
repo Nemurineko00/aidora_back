@@ -69,6 +69,8 @@ async function crearPublicacion(req, res) {
     if (basicos.error) return res.status(400).json({ error: basicos.error });
     const { cantidad, id_punto } = basicos;
 
+    const imagen_empaque = req.file ? `data: ${req.file.mimetype};base64,${req.file.toString("base64")}` : null;
+
     let id_medicamento = null;
     let medicamento = null;
     if (datos.id_medicamento !== undefined && datos.id_medicamento !== null && datos.id_medicamento !== '') {

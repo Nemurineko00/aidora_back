@@ -113,8 +113,14 @@ async function actualizarEstadoSolicitud(req, res, next) {
     try{
         if (idInvalido(req, res)) return;
         const estado = req.body?.estado;
+        const fecha_entrega = req.body?.fecha_entrega ?? null;
+
         if (!['Aceptada', 'Rechazada'].includes(estado)) {
             return res.status(400).json({ error: 'Solo puedes aceptar o rechazar la solicitud' });
+        }
+
+        if(estado === 'Aceptada' && !fecha_entrega){
+            return res.status(400).json({error: 'Debes indicar una fecha de entrega'});
         }
 
         const solicitud = await modeloSolicitud.listarSolicitudPorId(Number(req.params.id));

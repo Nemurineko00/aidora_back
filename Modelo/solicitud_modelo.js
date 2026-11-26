@@ -1,6 +1,6 @@
 const pool = require('../bd');
 
-const COLUMNAS_PUBLICAS = 's.id_solicitud, s.id_usuario, s.id_pub, s.estado';
+const COLUMNAS_PUBLICAS = 's.id_solicitud, s.id_usuario, s.id_pub, s.estado, s.fecha_entrega';
 
 async function listarSolicitud() {
     const { rows } = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM solicitud s ORDER BY s.id_solicitud`);
@@ -26,8 +26,8 @@ async function crearSolicitud({id_usuario, id_pub}) {
     return rows[0];
 }
 
-async function actualizarEstadoSolicitud(id_solicitud, estado) {
-    const resultado = await pool.query(`UPDATE solicitud SET estado = $1 WHERE id_solicitud = $2 RETURNING *`, [estado, id_solicitud]);
+async function actualizarEstadoSolicitud(id_solicitud, estado, fecha_entrega = null) {
+    const resultado = await pool.query(`UPDATE solicitud SET estado = $1, fecha_entrega = $2 WHERE id_solicitud = $3 RETURNING *`, [estado, id_solicitud, fecha_entrega]);
 
     if(resultado.rowCount === 0)return undefined;
 
