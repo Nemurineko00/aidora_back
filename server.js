@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
 
 const publicacion = require('./Controlador/publicacion_controlador');
 const solicitud = require('./Controlador/solicitud_controlador');
@@ -16,6 +15,7 @@ const puntoEntrega = require('./Controlador/puntoentrega_controlador');
 const reporte = require('./Controlador/reporte_controlador');
 
 const { verificarToken, soloRol } = require('./Controlador/autenticacion_middleware');
+const { CARPETA_SUBIDAS, RUTA_PUBLICA, subirFoto } = require('./Controlador/archivos');
 
 if (!process.env.JWT_SECRET) {
   console.error('Falta la variable JWT_SECRET en el archivo .env');
@@ -40,7 +40,10 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '20kb' }));
 
-const subirFoto = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }).single('foto');
+app.use(RUTA_PUBLICA, express.static(CARPETA_SUBIDAS, {
+  maxAge: '7d',
+  setHeaders: (res) => res.set('X-Content-Type-Options', 'nosniff'),
+}));
 
 const soloUsuario = [verificarToken, soloRol('usuario')];
 const soloAdmin = [verificarToken, soloRol('admin')];
@@ -84,6 +87,7 @@ app.post('/api/usuarios/login', usuario.iniciarSesion);
 app.get('/api/usuarios/perfil', soloUsuario, usuario.verPerfil);
 app.put('/api/usuarios/perfil', soloUsuario, usuario.editarPerfil);
 app.post('/api/usuarios/logout', soloUsuario, usuario.cerrarSesion);
+app.post('/api/sesion/logout', verificarToken, usuario.cerrarSesion);
 app.get('/api/usuarios/ayudante', soloUsuario, usuario.verAyudante);
 app.put('/api/usuarios/ayudante', soloUsuario, usuario.guardarAyudante);
 
@@ -102,7 +106,7 @@ app.get('/api/publicaciones/mias', soloUsuario, publicacion.obtenerMisPublicacio
 app.get('/api/publicaciones/:id/detalle', soloUsuario, publicacion.obtenerDetallePublicacion);
 app.get('/api/publicaciones/:id', soloUsuario, publicacion.obtenerPublicacionesPorId);
 app.post('/api/publicaciones', soloUsuario, subirFoto, publicacion.crearPublicacion);
-app.put('/api/publicaciones/:id', soloUsuario, publicacion.actualizarPublicacion);
+app.put('/api/publicaciones/:id', soloUsuario, subirFoto, publicacion.actualizarPublicacion);
 app.patch('/api/publicaciones/:id/estado', soloUsuario, publicacion.actualizarEstadoPublicacion);
 app.patch('/api/publicaciones/:id/cantidad', soloUsuario, publicacion.actualizarCantidaMedicamento);
 app.patch('/api/publicaciones/:id/punto', soloUsuario, publicacion.actualizarPunto);
@@ -136,6 +140,12 @@ app.use((error, req, res, next) => {
   }
   if (error.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ error: 'La imagen no puede pesar más de 5 MB' });
+  }
+  if (error.code === 'TIPO_ARCHIVO_INVALIDO') {
+    return res.status(400).json({ error: error.message });
+  }
+  if (error.name === 'MulterError') {
+    return res.status(400).json({ error: 'Solo puedes subir una imagen en el campo "foto"' });
   }
   if (error.type === 'entity.too.large') {
     return res.status(413).json({ error: 'Los datos enviados son demasiado grandes' });

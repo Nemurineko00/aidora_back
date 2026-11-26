@@ -1,5 +1,6 @@
 const reporteModelo = require('../Modelo/reporte_modelo');
 const publicacionModelo = require('../Modelo/publicacion_modelo');
+const { urlDeArchivo } = require('./archivos');
 
 const MOTIVOS_VALIDOS = [
   'Medicamento caducado',
@@ -56,7 +57,7 @@ async function crearReporte(req, res) {
     return res.status(409).json({ error: 'Ya reportaste esta publicación y está en revisión' });
   }
 
-  const reporte = await reporteModelo.crearReporte({ id_pub, id_usuario, motivos, evidencia: null });
+  const reporte = await reporteModelo.crearReporte({ id_pub, id_usuario, motivos, evidencia: urlDeArchivo(req.file) });
   res.status(201).json({ reporte });
 }
 module.exports={crearReporte,MOTIVOS_VALIDOS};

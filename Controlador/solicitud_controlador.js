@@ -1,7 +1,7 @@
 const modeloSolicitud = require('../Modelo/solicitud_modelo');
 const modeloPublicacion = require('../Modelo/publicacion_modelo');
 const modeloDonacion = require('../Modelo/donacion_modelo');
-const { validar } = require('./validaciones');
+const { validar, limpiar } = require('./validaciones');
 
 function idInvalido(req, res) {
     if (validar.id(req.params.id)) {
@@ -119,18 +119,19 @@ async function actualizarEstadoSolicitud(req, res, next) {
             return res.status(400).json({ error: 'Solo puedes aceptar o rechazar la solicitud' });
         }
 
-        if(estado === 'Aceptada' && !fecha_entrega){
-            return res.status(400).json({error: 'Debes indicar una fecha de entrega'});
-        }
-
         const solicitud = await modeloSolicitud.listarSolicitudPorId(Number(req.params.id));
         if (!solicitud) return res.status(404).json({ error: 'Solicitud no encontrada' });
 
         const pub = await modeloPublicacion.listarPublicacionesPorId(solicitud.id_pub);
         if (!pub || pub.id_usuario !== req.sesion.id) return res.status(403).json({ error: 'Solo el donante puede cambiar esta solicitud' });
 
+        if (estado === 'Aceptada') {
+            const errorFecha = validar.fechaEntrega(fecha_entrega, pub.fecha_caducidad);
+            if (errorFecha) return res.status(400).json({ error: errorFecha });
+        }
+
         const resultado = estado === 'Aceptada'
-            ? await modeloDonacion.aceptarSolicitud(solicitud.id_solicitud)
+            ? await modeloDonacion.aceptarSolicitud(solicitud.id_solicitud, limpiar(fecha_entrega))
             : await modeloDonacion.rechazarSolicitud(solicitud.id_solicitud);
 
         if (!resultado) return res.status(409).json({ error: 'Esta solicitud ya fue atendida o la publicación ya no está disponible' });

@@ -1,6 +1,7 @@
 const modeloPublicacion = require('../Modelo/publicacion_modelo');
 const modeloDonacion = require('../Modelo/donacion_modelo');
 const { validar, limpiar } = require('./validaciones');
+const { urlDeArchivo, borrarArchivo } = require('./archivos');
 
 async function obtenerPublicaciones(req, res) {
     
@@ -69,7 +70,7 @@ async function crearPublicacion(req, res) {
     if (basicos.error) return res.status(400).json({ error: basicos.error });
     const { cantidad, id_punto } = basicos;
 
-    const imagen_empaque = req.file ? `data: ${req.file.mimetype};base64,${req.file.toString("base64")}` : null;
+    const imagen_empaque = urlDeArchivo(req.file);
 
     let id_medicamento = null;
     let medicamento = null;
@@ -78,10 +79,11 @@ async function crearPublicacion(req, res) {
         if(!Number.isInteger(id_medicamento) || id_medicamento <= 0){
             return res.status(400).json({error: 'El medicamento no es válido'});
         }
+        if (req.file) borrarArchivo(imagen_empaque);
     } else {
         const leido = leerMedicamento(datos);
         if (leido.error) return res.status(400).json({ error: leido.error });
-        medicamento = leido.medicamento;
+        medicamento = { ...leido.medicamento, imagen_empaque };
     }
 
     try {
@@ -151,7 +153,9 @@ async function actualizarPublicacion(req, res) {
     if (leido.error) return res.status(400).json({ error: leido.error });
 
     try {
-        const resultado = await modeloPublicacion.actualizarPublicacionCompleta(id_pub, { medicamento: leido.medicamento, ...basicos });
+        const imagen_empaque = urlDeArchivo(req.file);
+        const resultado = await modeloPublicacion.actualizarPublicacionCompleta(id_pub, { medicamento: { ...leido.medicamento, imagen_empaque }, ...basicos });
+        if (imagen_empaque && publicacion.imagen_empaque !== imagen_empaque) borrarArchivo(publicacion.imagen_empaque);
         res.json(resultado);
     } catch (error) {
         if (error.code === '23503') return res.status(400).json({ error: 'El punto de entrega no existe' });

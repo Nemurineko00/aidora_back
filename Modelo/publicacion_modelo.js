@@ -122,8 +122,9 @@ async function actualizarPublicacionCompleta(id_pub, { medicamento, id_punto, ca
     }
 
     await cliente.query(
-      `UPDATE medicamento SET nombre_generico = $1, codigo_rs = $2, lote = $3, fecha_caducidad = $4, nombre_comercial = $6 WHERE id_medicamento = $5`,
-      [medicamento.nombre_generico, medicamento.codigo_rs, medicamento.lote, medicamento.fecha_caducidad, detalle.rows[0].id_medicamento, medicamento.nombre_comercial || medicamento.nombre_generico]
+      `UPDATE medicamento SET nombre_generico = $1, codigo_rs = $2, lote = $3, fecha_caducidad = $4, nombre_comercial = $6,
+              imagen_empaque = COALESCE($7, imagen_empaque) WHERE id_medicamento = $5`,
+      [medicamento.nombre_generico, medicamento.codigo_rs, medicamento.lote, medicamento.fecha_caducidad, detalle.rows[0].id_medicamento, medicamento.nombre_comercial || medicamento.nombre_generico, medicamento.imagen_empaque || null]
     );
 
     await cliente.query('COMMIT');

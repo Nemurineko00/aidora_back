@@ -87,6 +87,18 @@ const validar = {
     return null;
   },
 
+  fechaEntrega(v, fechaCaducidad) {
+    const f = limpiar(v);
+    if (!f) return 'Debes indicar una fecha de entrega';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(f)) return 'La fecha de entrega no es válida (AAAA-MM-DD)';
+    const fecha = new Date(`${f}T00:00:00Z`);
+    if (Number.isNaN(fecha.getTime()) || fecha.toISOString().slice(0, 10) !== f) return 'La fecha de entrega no existe';
+    const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+    if (f <= hoy) return 'La fecha de entrega debe ser a partir de mañana';
+    if (fechaCaducidad && f >= String(fechaCaducidad).slice(0, 10)) return 'La fecha de entrega debe ser antes de que caduque el medicamento';
+    return null;
+  },
+
   cantidad(v) {
     const n = Number(v);
     const { min, max } = LIMITES.cantidad;
