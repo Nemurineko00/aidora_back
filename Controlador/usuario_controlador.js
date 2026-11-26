@@ -9,7 +9,7 @@ function sinContrasena(usuario) {
   return resto;
 }
 
-const CAMPOS_REGISTRO = ['nombre', 'apellidoP', 'apellidoM', 'correo', 'contrasena'];
+const CAMPOS_REGISTRO = ['nombre', 'apellidoP', 'apellidoM', 'correo', 'edad', 'contrasena'];
 
 async function registrar(req, res) {
   const datos = req.body || {};
@@ -24,6 +24,7 @@ async function registrar(req, res) {
     validar.nombrePersona(datos.apellidoP, 'El apellido paterno') ||
     validar.nombrePersona(datos.apellidoM, 'El apellido materno') ||
     validar.correo(datos.correo) ||
+    validar.edad(datos.edad) ||
     validar.contrasenaNueva(datos.contrasena);
   if (errorDatos) return res.status(400).json({ error: errorDatos });
 
@@ -39,6 +40,7 @@ async function registrar(req, res) {
       nombre: limpiar(datos.nombre),
       apellido: `${limpiar(datos.apellidoP)} ${limpiar(datos.apellidoM)}`,
       email,
+      edad: Number(datos.edad),
       contrasenaHash,
     });
     return res.status(201).json({ usuario });
@@ -111,8 +113,14 @@ async function editarPerfil(req,res) {
     cambios.email = email;
   }
 
+  if (datos.edad !== undefined) {
+    const errorEdad = validar.edad(datos.edad);
+    if (errorEdad) return res.status(400).json({ error: errorEdad });
+    cambios.edad = Number(datos.edad);
+  }
+
   if (Object.keys(cambios).length === 0) {
-    return res.status(400).json({ error: 'No mandaste nada que cambiar (nombre, apellido o correo)' });
+    return res.status(400).json({ error: 'No mandaste nada que cambiar (nombre, apellido, correo o edad)' });
   }
 
   try {

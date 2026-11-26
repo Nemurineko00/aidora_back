@@ -1,6 +1,6 @@
 const pool = require('../bd');
 
-const COLUMNAS_PUBLICAS = 'id_usuario, nombre, apellido, email, activo';
+const COLUMNAS_PUBLICAS = 'id_usuario, nombre, apellido, email, edad, activo';
 
 async function listarUsuario(){
   const {rows} = await pool.query(`SELECT ${COLUMNAS_PUBLICAS} FROM usuario ORDER BY id_usuario`);
@@ -17,14 +17,14 @@ async function buscarPorEmail(email){
   return rows[0];
 }
 
-async function crearUsuario({nombre, apellido, email, contrasenaHash}) {
-  const { rows } = await pool.query(`INSERT INTO usuario (nombre, apellido, email, contrasena_hash) VALUES ($1, $2, $3, $4) RETURNING ${COLUMNAS_PUBLICAS}`,[nombre, apellido, email, contrasenaHash]);
+async function crearUsuario({nombre, apellido, email, edad, contrasenaHash}) {
+  const { rows } = await pool.query(`INSERT INTO usuario (nombre, apellido, email, edad, contrasena_hash) VALUES ($1, $2, $3, $4, $5) RETURNING ${COLUMNAS_PUBLICAS}`,[nombre, apellido, email, edad, contrasenaHash]);
 
   return rows[0];
 }
 
-async function actualizarUsuario( id_usuario, { nombre, apellido, email }) {
-  const cambios = Object.entries({nombre, apellido, email}).filter(([_, valor]) => valor !== undefined);
+async function actualizarUsuario( id_usuario, { nombre, apellido, email, edad }) {
+  const cambios = Object.entries({nombre, apellido, email, edad}).filter(([_, valor]) => valor !== undefined);
 
   if (cambios.length === 0) return listarUsuarioPorId(id_usuario);
 

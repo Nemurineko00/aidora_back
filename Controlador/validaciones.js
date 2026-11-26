@@ -10,6 +10,7 @@ const LIMITES = {
   ayudante: { min: 2, max: 100 },
   claveOng: { min: 3, max: 30 },
   motivoOtro: { min: 5, max: 300 },
+  edad: { min: 18, max: 70 },
 };
 
 const PATRON_NOMBRE = /^[\p{L}][\p{L}' .-]*$/u;
@@ -96,6 +97,15 @@ const validar = {
     const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
     if (f <= hoy) return 'La fecha de entrega debe ser a partir de mañana';
     if (fechaCaducidad && f >= String(fechaCaducidad).slice(0, 10)) return 'La fecha de entrega debe ser antes de que caduque el medicamento';
+    return null;
+  },
+
+  edad(v) {
+    const n = Number(v);
+    const { min, max } = LIMITES.edad;
+    if (v === undefined || v === null || v === '' || !Number.isInteger(n)) return 'La edad debe ser un número entero';
+    if (n < min) return `Debes tener al menos ${min} años para usar Aidora`;
+    if (n > max) return `La edad no puede ser mayor a ${max} años`;
     return null;
   },
 

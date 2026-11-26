@@ -20,19 +20,17 @@ async function listarPublicacionesDisponibles() {
   return rows;
 }
 
-async function crearPublicacion({id_usuario, id_medicamento, medicamento, id_punto, cantidad}) {
+async function crearPublicacion({id_usuario, medicamento, id_punto, cantidad}) {
   const cliente = await pool.connect();
   let id_pub;
   try {
     await cliente.query('BEGIN');
 
-    if (!id_medicamento) {
-      const nuevo = await cliente.query(
-        `INSERT INTO medicamento (nombre_comercial, nombre_generico, codigo_rs, lote, fecha_caducidad, imagen_empaque) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_medicamento`,
-        [medicamento.nombre_comercial || medicamento.nombre_generico, medicamento.nombre_generico, medicamento.codigo_rs, medicamento.lote, medicamento.fecha_caducidad, medicamento.imagen_empaque || null]
-      );
-      id_medicamento = nuevo.rows[0].id_medicamento;
-    }
+    const nuevo = await cliente.query(
+      `INSERT INTO medicamento (nombre_comercial, nombre_generico, codigo_rs, lote, fecha_caducidad, imagen_empaque) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_medicamento`,
+      [medicamento.nombre_comercial || medicamento.nombre_generico, medicamento.nombre_generico, medicamento.codigo_rs, medicamento.lote, medicamento.fecha_caducidad, medicamento.imagen_empaque || null]
+    );
+    const id_medicamento = nuevo.rows[0].id_medicamento;
 
     const encabezado = await cliente.query(`INSERT INTO encabezado_pub (id_usuario, estado) VALUES ($1, 'Disponible') RETURNING id_pub`, [id_usuario]);
     id_pub = encabezado.rows[0].id_pub;

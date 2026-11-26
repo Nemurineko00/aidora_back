@@ -70,28 +70,16 @@ async function crearPublicacion(req, res) {
     if (basicos.error) return res.status(400).json({ error: basicos.error });
     const { cantidad, id_punto } = basicos;
 
-    const imagen_empaque = urlDeArchivo(req.file);
-
-    let id_medicamento = null;
-    let medicamento = null;
-    if (datos.id_medicamento !== undefined && datos.id_medicamento !== null && datos.id_medicamento !== '') {
-        id_medicamento = Number(datos.id_medicamento);
-        if(!Number.isInteger(id_medicamento) || id_medicamento <= 0){
-            return res.status(400).json({error: 'El medicamento no es válido'});
-        }
-        if (req.file) borrarArchivo(imagen_empaque);
-    } else {
-        const leido = leerMedicamento(datos);
-        if (leido.error) return res.status(400).json({ error: leido.error });
-        medicamento = { ...leido.medicamento, imagen_empaque };
-    }
+    const leido = leerMedicamento(datos);
+    if (leido.error) return res.status(400).json({ error: leido.error });
+    const medicamento = { ...leido.medicamento, imagen_empaque: urlDeArchivo(req.file) };
 
     try {
-        const publicacion = await modeloPublicacion.crearPublicacion({id_usuario: req.sesion.id, id_medicamento, medicamento, id_punto, cantidad});
+        const publicacion = await modeloPublicacion.crearPublicacion({id_usuario: req.sesion.id, medicamento, id_punto, cantidad});
         res.status(201).json(publicacion);
     } catch (error) {
         if (error.code === '23503') {
-            return res.status(400).json({error: 'El medicamento o el punto de entrega no existen'});
+            return res.status(400).json({error: 'El punto de entrega no existe'});
         }
         throw error;
     }
