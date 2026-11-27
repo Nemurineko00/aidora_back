@@ -98,7 +98,7 @@ async function editarPerfil(req,res) {
   if (datos.apellido !== undefined) {
     const apellido = limpiar(datos.apellido);
     if (!apellido) return res.status(400).json({ error: 'El apellido es obligatorio' });
-    if (apellido.length > 101) return res.status(400).json({ error: 'El apellido no puede pasar de 101 caracteres' });
+    if (apellido.length > 101) return res.status(400).json({ error: 'El apellido no puede pasar de 100 caracteres' });
     if (!/^[\p{L}][\p{L}' .-]*$/u.test(apellido)) return res.status(400).json({ error: 'El apellido solo puede llevar letras, espacios, apóstrofo o guion' });
     cambios.apellido = apellido;
   }
